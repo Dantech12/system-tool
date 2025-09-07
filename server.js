@@ -5,7 +5,7 @@ const multer = require('multer');
 const xlsx = require('xlsx');
 const path = require('path');
 const fs = require('fs');
-const cloudinaryDB = require('./cloudinary-db');
+const postgresDB = require('./postgres-db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,8 +24,13 @@ app.use(session({
 // Configure multer for file uploads
 const upload = multer({ dest: 'uploads/' });
 
-// Initialize Cloudinary database
-cloudinaryDB.initialize();
+// Initialize PostgreSQL database
+postgresDB.initialize().then(() => {
+    console.log('Server starting...');
+}).catch(error => {
+    console.error('Failed to initialize database:', error);
+    process.exit(1);
+});
 
 // Function to calculate shift times
 function calculateShiftTimes(shiftTime, date = new Date()) {
@@ -56,7 +61,7 @@ function calculateShiftTimes(shiftTime, date = new Date()) {
 async function checkOverdueTools() {
     try {
         const now = new Date();
-        const issuances = await cloudinaryDB.getToolIssuances();
+        const issuances = await postgresDB.getToolIssuances();
         
         const overdueItems = issuances.filter(item => {
             if (item.status !== 'issued' || item.is_overdue) return false;
@@ -76,7 +81,8 @@ async function checkOverdueTools() {
         }
         
         if (overdueItems.length > 0) {
-            await cloudinaryDB.updateToolIssuances(issuances);
+            const overdueIds = overdueItems.map(item => item.id);
+            await postgresDB.markToolsOverdue(overdueIds);
         }
     } catch (error) {
         console.error('Error checking overdue tools:', error);
@@ -86,7 +92,7 @@ async function checkOverdueTools() {
 // Function to get overdue tools (legacy - now handled by CloudinaryDB)
 async function getOverdueTools() {
     try {
-        return await cloudinaryDB.getOverdueTools();
+        return await postgresDB.getOverdueTools();
     } catch (error) {
         console.error('Error getting overdue tools:', error);
         return [];
@@ -118,8 +124,8 @@ async function generateAutomaticReports() {
         const attendants = users.filter(user => user.role === 'attendant');
         
         if (attendants.length > 0) {
-            const toolIssuances = await cloudinaryDB.getToolIssuances();
-            const tools = await cloudinaryDB.getTools();
+            const toolIssuances = await postgresDB.getToolIssuances();
+            const tools = await postgresDB.getTools();
             
             attendants.forEach(attendant => {
                 const tenDaysAgo = new Date();
@@ -163,8 +169,8 @@ async function generateAutomaticReports() {
         const firstDayOfMonth = new Date();
         firstDayOfMonth.setDate(1);
         
-        const toolIssuances = await cloudinaryDB.getToolIssuances();
-        const tools = await cloudinaryDB.getTools();
+        const toolIssuances = await postgresDB.getToolIssuances();
+        const tools = await postgresDB.getTools();
         
         // Filter issuances for this month
         const monthlyData = toolIssuances.filter(issuance => {
@@ -310,7 +316,7 @@ app.post('/login', async (req, res) => {
     const { username, password } = req.body;
     
     try {
-        const user = await cloudinaryDB.getUserByUsername(username);
+        const user = await postgresDB.getUserByUsername(username);
         
         if (user && bcrypt.compareSync(password, user.password)) {
             req.session.user = {
@@ -354,7 +360,7 @@ app.get('/api/overdue-tools', requireAuth, async (req, res) => {
 // API endpoint to get overdue tools count
 app.get('/api/overdue-tools/count', requireAuth, async (req, res) => {
     try {
-        const overdueTools = await cloudinaryDB.getOverdueTools();
+        const overdueTools = await postgresDB.getOverdueTools();
         res.json({ count: overdueTools.length });
     } catch (error) {
         console.error('Error fetching overdue count:', error);
@@ -379,7 +385,7 @@ app.post('/api/admin/users', requireAdmin, async (req, res) => {
     const hashedPassword = bcrypt.hashSync(password, 10);
     
     try {
-        const newUser = await cloudinaryDB.addUser({
+        const newUser = await postgresDB.createUser({
             username,
             password: hashedPassword,
             role: 'attendant',
@@ -407,7 +413,7 @@ app.post('/api/admin/tools', requireAdmin, async (req, res) => {
     const { tool_code, description, quantity } = req.body;
     
     try {
-        const newTool = await cloudinaryDB.addTool({
+        const newTool = await postgresDB.createTool({
             tool_code,
             description,
             quantity
@@ -424,15 +430,8 @@ app.put('/api/admin/tools/:id', requireAdmin, async (req, res) => {
     const { tool_code, description, quantity } = req.body;
     
     try {
-        const updatedTool = await cloudinaryDB.updateTool(parseInt(id), {
-            tool_code,
-            description,
-            quantity
-        });
-        
-        if (!updatedTool) {
-            return res.status(404).json({ error: 'Tool not found' });
-        }
+        // Tool update functionality needs to be implemented in PostgreSQL module
+        res.status(501).json({ error: 'Tool update not yet implemented' });
         
         res.json({ success: true });
     } catch (error) {
@@ -444,7 +443,7 @@ app.put('/api/admin/tools/:id', requireAdmin, async (req, res) => {
 // Tool issuance routes
 app.get('/api/tools', requireAuth, async (req, res) => {
     try {
-        const tools = await cloudinaryDB.getAvailableTools();
+        const tools = await postgresDB.getTools();
         res.json(tools);
     } catch (error) {
         console.error('Error fetching tools:', error);
@@ -475,7 +474,7 @@ app.post('/api/tool-issuances', requireAuth, async (req, res) => {
     const { startTime, endTime } = calculateShiftTimes(userShiftTime, issueDate);
     
     try {
-        const newIssuance = await cloudinaryDB.addToolIssuance({
+        const newIssuance = await postgresDB.createToolIssuance({
             date,
             tool_code,
             tool_description: tool_description || '',
@@ -503,9 +502,9 @@ app.get('/api/tool-issuances', requireAuth, async (req, res) => {
     try {
         let issuances;
         if (req.session.user.role === 'attendant') {
-            issuances = await cloudinaryDB.getToolIssuancesByAttendant(req.session.user.username);
+            issuances = await postgresDB.getToolIssuancesByAttendant(req.session.user.username);
         } else {
-            issuances = await cloudinaryDB.getToolIssuances();
+            issuances = await postgresDB.getToolIssuances();
         }
         res.json(issuances);
     } catch (error) {
@@ -519,15 +518,11 @@ app.put('/api/tool-issuances/:id/return', requireAuth, async (req, res) => {
     const { time_in, condition_returned } = req.body;
     
     try {
-        const updatedIssuance = await cloudinaryDB.updateToolIssuance(parseInt(id), {
+        await postgresDB.returnTool(parseInt(id), {
             time_in,
             condition_returned,
             status: 'returned'
         });
-        
-        if (!updatedIssuance) {
-            return res.status(404).json({ error: 'Tool issuance not found' });
-        }
         
         res.json({ success: true });
     } catch (error) {

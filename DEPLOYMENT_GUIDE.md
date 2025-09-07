@@ -9,20 +9,22 @@ Before you begin, you'll need:
 2. A Render account (free tier available)
 3. A Cloudinary account (free tier available)
 
-## Step 1: Set Up Cloudinary
+## Step 1: Set Up PostgreSQL Database
 
-### 1.1 Create Cloudinary Account
-1. Go to [cloudinary.com](https://cloudinary.com)
-2. Click "Sign Up" and create a free account
-3. Verify your email address
+### 1.1 Create PostgreSQL Database on Render
+1. Go to [render.com](https://render.com) and log in
+2. Click "New +" and select "PostgreSQL"
+3. Configure your database:
+   - **Name**: `rabotec-postgres`
+   - **Database**: `rabotec_tools`
+   - **User**: `rabotec_user`
+   - **Plan**: Free (or paid for better performance)
+4. Click "Create Database"
 
-### 1.2 Get Cloudinary Credentials
-1. After logging in, go to your Dashboard
-2. You'll see your account details:
-   - **Cloud Name** (e.g., `dxxxxxxxx`)
-   - **API Key** (e.g., `123456789012345`)
-   - **API Secret** (e.g., `abcdefghijklmnopqrstuvwxyz123456`)
-3. **Important**: Keep these credentials safe - you'll need them later
+### 1.2 Get Database Connection Details
+1. After creation, go to your database dashboard
+2. Copy the **External Database URL** (starts with `postgresql://`)
+3. **Important**: Keep this URL safe - you'll need it for deployment
 
 ## Step 2: Prepare Your Code
 
@@ -69,9 +71,7 @@ In the Render dashboard, go to Environment section and add:
 | Key | Value | Description |
 |-----|-------|-------------|
 | `NODE_ENV` | `production` | Sets production environment |
-| `CLOUDINARY_CLOUD_NAME` | Your cloud name from Step 1.2 | Cloudinary account identifier |
-| `CLOUDINARY_API_KEY` | Your API key from Step 1.2 | Cloudinary API access key |
-| `CLOUDINARY_API_SECRET` | Your API secret from Step 1.2 | Cloudinary API secret key |
+| `DATABASE_URL` | Your PostgreSQL URL from Step 1.2 | PostgreSQL database connection string |
 | `SESSION_SECRET` | Generate a random string | Session encryption key |
 
 **To generate SESSION_SECRET**: Use a random string generator or run this in terminal:
