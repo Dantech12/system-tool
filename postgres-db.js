@@ -294,6 +294,20 @@ class PostgresDB {
         }
     }
 
+    // Tool issuances by attendant
+    async getToolIssuancesByAttendant(attendantName) {
+        const client = await this.pool.connect();
+        try {
+            const result = await client.query(
+                'SELECT * FROM tool_issuances WHERE attendant_name = $1 ORDER BY created_at DESC',
+                [attendantName]
+            );
+            return result.rows;
+        } finally {
+            client.release();
+        }
+    }
+
     // Overdue tools methods
     async getOverdueTools() {
         const client = await this.pool.connect();
@@ -332,8 +346,21 @@ class PostgresDB {
         const client = await this.pool.connect();
         try {
             await client.query(
-                'UPDATE tool_issuances SET is_overdue = false, overdue_since = NULL WHERE id = $1',
-                [issuanceId]
+                'UPDATE tool_issuances SET is_overdue = false, overdue_since = NULL, status = $1 WHERE id = $2',
+                ['cleared_overdue', issuanceId]
+            );
+            return true;
+        } finally {
+            client.release();
+        }
+    }
+
+    async deleteUser(userId) {
+        const client = await this.pool.connect();
+        try {
+            await client.query(
+                'DELETE FROM users WHERE id = $1 AND role = $2',
+                [userId, 'attendant']
             );
             return true;
         } finally {

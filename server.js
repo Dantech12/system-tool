@@ -612,63 +612,63 @@ app.post('/api/admin/import-tools', requireAdmin, upload.single('excel'), (req, 
 });
 
 // Clear overdue status
-app.put('/api/tool-issuances/:id/clear-overdue', requireAdmin, (req, res) => {
+app.put('/api/tool-issuances/:id/clear-overdue', requireAdmin, async (req, res) => {
     const { id } = req.params;
     
-    db.run('UPDATE tool_issuances SET status = "cleared_overdue", updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-           [id], function(err) {
-        if (err) {
-            return res.status(500).json({ error: 'Failed to clear overdue status' });
-        }
+    try {
+        await postgresDB.clearOverdueStatus(parseInt(id));
         res.json({ success: true });
-    });
+    } catch (error) {
+        console.error('Error clearing overdue status:', error);
+        res.status(500).json({ error: 'Failed to clear overdue status' });
+    }
 });
 
 // Delete user
-app.delete('/api/admin/users/:id', requireAdmin, (req, res) => {
+app.delete('/api/admin/users/:id', requireAdmin, async (req, res) => {
     const { id } = req.params;
     
-    db.run('DELETE FROM users WHERE id = ? AND role = "attendant"', [id], function(err) {
-        if (err) {
-            return res.status(500).json({ error: 'Failed to delete user' });
-        }
+    try {
+        await postgresDB.deleteUser(parseInt(id));
         res.json({ success: true });
-    });
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        res.status(500).json({ error: 'Failed to delete user' });
+    }
 });
 
 // Export routes
-app.get('/api/export/issuances', requireAuth, (req, res) => {
-    const { format, startDate, endDate, shift } = req.query;
-    
-    let query = 'SELECT * FROM tool_issuances WHERE 1=1';
-    let params = [];
-    
-    if (req.session.user.role === 'attendant') {
-        query += ' AND attendant_name = ?';
-        params.push(req.session.user.username);
-    }
-    
-    if (startDate) {
-        query += ' AND date >= ?';
-        params.push(startDate);
-    }
-    
-    if (endDate) {
-        query += ' AND date <= ?';
-        params.push(endDate);
-    }
-    
-    if (shift) {
-        query += ' AND attendant_shift = ?';
-        params.push(shift);
-    }
-    
-    query += ' ORDER BY created_at DESC';
-    
-    db.all(query, params, (err, issuances) => {
-        if (err) {
-            return res.status(500).json({ error: 'Database error' });
+app.get('/api/export/issuances', requireAuth, async (req, res) => {
+    try {
+        console.log('Export issuances requested by:', req.session.user?.username);
+        const { format, startDate, endDate, shift } = req.query;
+        
+        let issuances;
+        
+        if (req.session.user.role === 'attendant') {
+            // For attendants, get only their issuances
+            issuances = await postgresDB.getToolIssuancesByAttendant(req.session.user.username);
+        } else {
+            // For admins, get all issuances
+            issuances = await postgresDB.getToolIssuances();
         }
+        
+        // Apply date filters if provided
+        if (startDate || endDate) {
+            issuances = issuances.filter(item => {
+                const itemDate = new Date(item.date);
+                if (startDate && itemDate < new Date(startDate)) return false;
+                if (endDate && itemDate > new Date(endDate)) return false;
+                return true;
+            });
+        }
+        
+        // Apply shift filter if provided
+        if (shift) {
+            issuances = issuances.filter(item => item.attendant_shift === shift);
+        }
+        
+        console.log('Filtered issuances count:', issuances.length);
         
         if (format === 'pdf') {
             generatePDFReport(res, issuances, req.session.user);
@@ -677,7 +677,10 @@ app.get('/api/export/issuances', requireAuth, (req, res) => {
         } else {
             res.json(issuances);
         }
-    });
+    } catch (error) {
+        console.error('Error exporting issuances:', error);
+        res.status(500).json({ error: 'Failed to export issuances: ' + error.message });
+    }
 });
 
 // Generate reports
