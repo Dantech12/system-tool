@@ -125,7 +125,7 @@ async function generateAutomaticReports() {
         console.log('Generating automatic reports...');
         
         // Generate 10-day shift reports for all attendants
-        const users = await cloudinaryDB.getUsers();
+        const users = await postgresDB.getUsers();
         const attendants = users.filter(user => user.role === 'attendant');
         
         if (attendants.length > 0) {
@@ -393,7 +393,7 @@ app.get('/logout', (req, res) => {
 // API endpoint to get overdue tools
 app.get('/api/overdue-tools', requireAuth, async (req, res) => {
     try {
-        const overdueTools = await cloudinaryDB.getOverdueTools();
+        const overdueTools = await postgresDB.getOverdueTools();
         res.json(overdueTools);
     } catch (error) {
         console.error('Error fetching overdue tools:', error);
@@ -415,7 +415,7 @@ app.get('/api/overdue-tools/count', requireAuth, async (req, res) => {
 // Admin routes
 app.get('/api/admin/users', requireAdmin, async (req, res) => {
     try {
-        const users = await cloudinaryDB.getUsers();
+        const users = await postgresDB.getUsers();
         const attendants = users.filter(user => user.role === 'attendant');
         res.json(attendants);
     } catch (error) {
@@ -445,7 +445,7 @@ app.post('/api/admin/users', requireAdmin, async (req, res) => {
 
 app.get('/api/admin/tools', requireAdmin, async (req, res) => {
     try {
-        const tools = await cloudinaryDB.getTools();
+        const tools = await postgresDB.getTools();
         res.json(tools);
     } catch (error) {
         console.error('Error fetching tools:', error);
