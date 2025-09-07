@@ -222,19 +222,6 @@ class PostgresDB {
         }
     }
 
-    async getToolIssuancesByAttendant(attendantName) {
-        const client = await this.pool.connect();
-        try {
-            const result = await client.query(
-                'SELECT * FROM tool_issuances WHERE attendant_name = $1 ORDER BY created_at DESC',
-                [attendantName]
-            );
-            return result.rows;
-        } finally {
-            client.release();
-        }
-    }
-
     async createToolIssuance(issuanceData) {
         const client = await this.pool.connect();
         try {
@@ -288,6 +275,20 @@ class PostgresDB {
             await this.updateToolQuantity(issuance.tool_code, issuance.quantity);
 
             return true;
+        } finally {
+            client.release();
+        }
+    }
+
+    // Tool issuances by date range
+    async getToolIssuancesByDateRange(startDate, endDate) {
+        const client = await this.pool.connect();
+        try {
+            const result = await client.query(
+                'SELECT * FROM tool_issuances WHERE date >= $1 AND date <= $2 ORDER BY date DESC',
+                [startDate.toISOString().split('T')[0], endDate.toISOString().split('T')[0]]
+            );
+            return result.rows;
         } finally {
             client.release();
         }

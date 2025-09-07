@@ -681,38 +681,36 @@ app.get('/api/export/issuances', requireAuth, (req, res) => {
 });
 
 // Generate reports
-app.get('/api/reports/10-day', requireAdmin, (req, res) => {
-    const tenDaysAgo = new Date();
-    tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
-    
-    const query = `
-        SELECT * FROM tool_issuances 
-        WHERE date >= ? AND (condition_returned IN ('Damaged', 'Needs Repair', 'Lost/Missing') OR status = 'issued')
-        ORDER BY date DESC
-    `;
-    
-    db.all(query, [tenDaysAgo.toISOString().split('T')[0]], (err, results) => {
-        if (err) {
-            return res.status(500).json({ error: 'Database error' });
-        }
+app.get('/api/reports/10-day', requireAdmin, async (req, res) => {
+    try {
+        const tenDaysAgo = new Date();
+        tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
         
-        generatePDFReport(res, results, req.session.user, '10-Day Shift Report');
-    });
+        const results = await postgresDB.getToolIssuancesByDateRange(tenDaysAgo, new Date());
+        const filteredResults = results.filter(item => 
+            item.condition_returned && ['Damaged', 'Needs Repair', 'Lost/Missing'].includes(item.condition_returned) ||
+            item.status === 'issued'
+        );
+        
+        generatePDFReport(res, filteredResults, req.session.user, '10-Day Shift Report');
+    } catch (error) {
+        console.error('Error generating 10-day report:', error);
+        res.status(500).json({ error: 'Failed to generate report' });
+    }
 });
 
-app.get('/api/reports/monthly', requireAdmin, (req, res) => {
-    const firstDayOfMonth = new Date();
-    firstDayOfMonth.setDate(1);
-    
-    const query = 'SELECT * FROM tool_issuances WHERE date >= ? ORDER BY date DESC';
-    
-    db.all(query, [firstDayOfMonth.toISOString().split('T')[0]], (err, results) => {
-        if (err) {
-            return res.status(500).json({ error: 'Database error' });
-        }
+app.get('/api/reports/monthly', requireAdmin, async (req, res) => {
+    try {
+        const firstDayOfMonth = new Date();
+        firstDayOfMonth.setDate(1);
+        
+        const results = await postgresDB.getToolIssuancesByDateRange(firstDayOfMonth, new Date());
         
         generatePDFReport(res, results, req.session.user, 'Monthly Audit Report');
-    });
+    } catch (error) {
+        console.error('Error generating monthly report:', error);
+        res.status(500).json({ error: 'Failed to generate report' });
+    }
 });
 
 // PDF Generation Function
