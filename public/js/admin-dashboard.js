@@ -694,8 +694,31 @@ function generateShiftOptions() {
 async function generate10DayReport() {
     try {
         showAlert('Generating 10-day report...', 'success');
-        window.open('/api/reports/10-day', '_blank');
+        
+        const response = await fetch('/api/reports/10-day', {
+            method: 'GET',
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `Rabotec_10Day_Report_${new Date().toISOString().slice(0,10)}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            showAlert('10-day report downloaded successfully!', 'success');
+        } else {
+            const errorText = await response.text();
+            console.error('Report generation failed:', errorText);
+            showAlert('Failed to generate 10-day report', 'error');
+        }
     } catch (error) {
+        console.error('Error generating 10-day report:', error);
         showAlert('Error generating 10-day report', 'error');
     }
 }
@@ -703,8 +726,31 @@ async function generate10DayReport() {
 async function generateMonthlyReport() {
     try {
         showAlert('Generating monthly report...', 'success');
-        window.open('/api/reports/monthly', '_blank');
+        
+        const response = await fetch('/api/reports/monthly', {
+            method: 'GET',
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `Rabotec_Monthly_Report_${new Date().toISOString().slice(0,10)}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            showAlert('Monthly report downloaded successfully!', 'success');
+        } else {
+            const errorText = await response.text();
+            console.error('Report generation failed:', errorText);
+            showAlert('Failed to generate monthly report', 'error');
+        }
     } catch (error) {
+        console.error('Error generating monthly report:', error);
         showAlert('Error generating monthly report', 'error');
     }
 }
@@ -733,11 +779,34 @@ function generateCustomReport() {
     }
 }
 
-function exportAllIssuances() {
+async function exportAllIssuances() {
     try {
         showAlert('Exporting all issuances...', 'success');
-        window.open('/api/export/issuances?format=pdf', '_blank');
+        
+        const response = await fetch('/api/export/issuances?format=pdf', {
+            method: 'GET',
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `Rabotec_All_Issuances_${new Date().toISOString().slice(0,10)}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            showAlert('All issuances exported successfully!', 'success');
+        } else {
+            const errorText = await response.text();
+            console.error('Export failed:', errorText);
+            showAlert('Failed to export issuances', 'error');
+        }
     } catch (error) {
+        console.error('Error exporting issuances:', error);
         showAlert('Error exporting issuances', 'error');
     }
 }

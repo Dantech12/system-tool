@@ -487,16 +487,39 @@ function handleToolSearch() {
     });
 }
 
-function exportAllRecords() {
+async function exportAllRecords() {
     try {
         showAlert('Exporting all records...', 'success');
-        window.open('/api/export/issuances?format=pdf', '_blank');
+        
+        const response = await fetch('/api/export/issuances?format=pdf', {
+            method: 'GET',
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `Rabotec_All_Records_${new Date().toISOString().slice(0,10)}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            showAlert('All records exported successfully!', 'success');
+        } else {
+            const errorText = await response.text();
+            console.error('Export failed:', errorText);
+            showAlert('Failed to export records', 'error');
+        }
     } catch (error) {
+        console.error('Error exporting records:', error);
         showAlert('Error exporting records', 'error');
     }
 }
 
-function exportMyRecords(format) {
+async function exportMyRecords(format) {
     try {
         showAlert(`Exporting records as ${format.toUpperCase()}...`, 'success');
         const startDate = document.getElementById('filterStartDate').value;
@@ -506,8 +529,34 @@ function exportMyRecords(format) {
         if (startDate) params.append('startDate', startDate);
         if (endDate) params.append('endDate', endDate);
         
-        window.open(`/api/export/issuances?${params}`, '_blank');
+        if (format === 'pdf') {
+            const response = await fetch(`/api/export/issuances?${params}`, {
+                method: 'GET',
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `Rabotec_My_Records_${new Date().toISOString().slice(0,10)}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                showAlert('Records exported successfully!', 'success');
+            } else {
+                const errorText = await response.text();
+                console.error('Export failed:', errorText);
+                showAlert('Failed to export records', 'error');
+            }
+        } else {
+            window.open(`/api/export/issuances?${params}`, '_blank');
+        }
     } catch (error) {
+        console.error('Error exporting records:', error);
         showAlert('Error exporting records', 'error');
     }
 }
