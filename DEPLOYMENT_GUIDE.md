@@ -22,9 +22,19 @@ Before you begin, you'll need:
 4. Click "Create Database"
 
 ### 1.2 Get Database Connection Details
-1. After creation, go to your database dashboard
-2. Copy the **External Database URL** (starts with `postgresql://`)
-3. **Important**: Keep this URL safe - you'll need it for deployment
+1. After creation, wait for the database to finish provisioning (may take 1-2 minutes)
+2. Go to your PostgreSQL database dashboard in Render
+3. Look for the **"Connections"** section or **"Info"** tab
+4. Find and copy the **"External Database URL"** or **"Connection String"**
+   - It should look like: `postgresql://username:password@hostname:port/database_name`
+   - If you don't see it immediately, refresh the page or check the "Info" tab
+5. **Alternative**: Look for individual connection details:
+   - **Host**: (e.g., `dpg-xxxxx-a.oregon-postgres.render.com`)
+   - **Port**: `5432`
+   - **Database**: `rabotec_tools`
+   - **Username**: `rabotec_user`
+   - **Password**: (auto-generated)
+6. **Important**: Keep this URL safe - you'll need it for deployment
 
 ## Step 2: Prepare Your Code
 
