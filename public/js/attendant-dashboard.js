@@ -325,19 +325,58 @@ async function loadAvailableTools() {
     }).join('');
 }
 
-function loadShiftSummary() {
-    const today = new Date().toISOString().split('T')[0];
-    const todayIssuances = myIssuances.filter(i => i.date === today);
-    
-    const issuedToday = todayIssuances.length;
-    const returnedToday = todayIssuances.filter(i => i.status === 'returned').length;
-    const pendingReturns = myIssuances.filter(i => i.status === 'issued').length;
-    const overdueReturns = myIssuances.filter(i => isOverdueIssuance(i)).length;
-    
-    document.getElementById('shiftIssuances').textContent = issuedToday;
-    document.getElementById('shiftReturns').textContent = returnedToday;
-    document.getElementById('shiftPending').textContent = pendingReturns;
-    document.getElementById('shiftOverdue').textContent = overdueReturns;
+async function loadShiftSummary() {
+    try {
+        // Ensure we have fresh data
+        if (!myIssuances || myIssuances.length === 0) {
+            const response = await fetch('/api/tool-issuances');
+            if (response.ok) {
+                myIssuances = await response.json();
+            } else {
+                console.error('Failed to fetch issuances for summary');
+                return;
+            }
+        }
+        
+        const today = new Date().toISOString().split('T')[0];
+        const todayIssuances = myIssuances.filter(i => {
+            const issueDate = new Date(i.date).toISOString().split('T')[0];
+            return issueDate === today;
+        });
+        
+        const issuedToday = todayIssuances.length;
+        const returnedToday = todayIssuances.filter(i => i.status === 'returned' || i.time_in).length;
+        const pendingReturns = myIssuances.filter(i => i.status === 'issued' && !i.time_in).length;
+        const overdueReturns = myIssuances.filter(i => isOverdueIssuance(i)).length;
+        
+        // Update the display elements
+        const shiftIssuancesEl = document.getElementById('shiftIssuances');
+        const shiftReturnsEl = document.getElementById('shiftReturns');
+        const shiftPendingEl = document.getElementById('shiftPending');
+        const shiftOverdueEl = document.getElementById('shiftOverdue');
+        
+        if (shiftIssuancesEl) shiftIssuancesEl.textContent = issuedToday;
+        if (shiftReturnsEl) shiftReturnsEl.textContent = returnedToday;
+        if (shiftPendingEl) shiftPendingEl.textContent = pendingReturns;
+        if (shiftOverdueEl) shiftOverdueEl.textContent = overdueReturns;
+        
+        console.log('Shift summary updated:', {
+            issuedToday,
+            returnedToday,
+            pendingReturns,
+            overdueReturns,
+            totalRecords: myIssuances.length
+        });
+        
+    } catch (error) {
+        console.error('Error loading shift summary:', error);
+        // Set default values on error
+        const elements = ['shiftIssuances', 'shiftReturns', 'shiftPending', 'shiftOverdue'];
+        elements.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = '0';
+        });
+    }
 }
 
 function handleToolSelection() {
