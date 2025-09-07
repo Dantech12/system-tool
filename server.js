@@ -18,7 +18,12 @@ app.use(session({
     secret: process.env.SESSION_SECRET || 'rabotec-secret-key-2024',
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: process.env.NODE_ENV === 'production', maxAge: 24 * 60 * 60 * 1000 } // 24 hours
+    cookie: { 
+        secure: false, // Changed from production check - HTTPS issues on Render
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000,
+        sameSite: 'lax'
+    }
 }));
 
 // Configure multer for file uploads
@@ -292,17 +297,28 @@ setTimeout(generateAutomaticReports, 10000);
 
 // Authentication middleware
 const requireAuth = (req, res, next) => {
+    console.log('Auth check - Session user:', req.session.user ? 'Present' : 'Missing');
+    console.log('Session ID:', req.sessionID);
+    
     if (req.session.user) {
         next();
     } else {
-        res.redirect('/');
+        console.log('Authentication failed - redirecting to login');
+        if (req.path.includes('/api/')) {
+            res.status(401).json({ error: 'Authentication required' });
+        } else {
+            res.redirect('/');
+        }
     }
 };
 
 const requireAdmin = (req, res, next) => {
+    console.log('Admin check - User role:', req.session.user?.role);
+    
     if (req.session.user && req.session.user.role === 'admin') {
         next();
     } else {
+        console.log('Admin access denied');
         res.status(403).json({ error: 'Admin access required' });
     }
 };
@@ -312,13 +328,31 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
+// Protected dashboard routes
+app.get('/admin-dashboard.html', requireAuth, (req, res) => {
+    if (req.session.user.role !== 'admin') {
+        return res.redirect('/');
+    }
+    res.sendFile(path.join(__dirname, 'public', 'admin-dashboard.html'));
+});
+
+app.get('/attendant-dashboard.html', requireAuth, (req, res) => {
+    if (req.session.user.role !== 'attendant') {
+        return res.redirect('/');
+    }
+    res.sendFile(path.join(__dirname, 'public', 'attendant-dashboard.html'));
+});
+
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
+    console.log('Login attempt for username:', username);
     
     try {
         const user = await postgresDB.getUserByUsername(username);
+        console.log('User found:', user ? 'Yes' : 'No');
         
         if (user && bcrypt.compareSync(password, user.password)) {
+            console.log('Password match: Yes');
             req.session.user = {
                 id: user.id,
                 username: user.username,
@@ -327,17 +361,27 @@ app.post('/login', async (req, res) => {
                 shift_time: user.shift_time
             };
             
-            if (user.role === 'admin') {
-                res.json({ success: true, redirect: '/admin-dashboard.html' });
-            } else {
-                res.json({ success: true, redirect: '/attendant-dashboard.html' });
-            }
+            // Save session explicitly
+            req.session.save((err) => {
+                if (err) {
+                    console.error('Session save error:', err);
+                    return res.status(500).json({ error: 'Session error' });
+                }
+                
+                console.log('Session saved successfully for user:', username);
+                if (user.role === 'admin') {
+                    res.json({ success: true, redirect: '/admin-dashboard.html' });
+                } else {
+                    res.json({ success: true, redirect: '/attendant-dashboard.html' });
+                }
+            });
         } else {
+            console.log('Password match: No');
             res.status(401).json({ error: 'Invalid credentials' });
         }
     } catch (error) {
         console.error('Login error:', error);
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).json({ error: 'Server error: ' + error.message });
     }
 });
 

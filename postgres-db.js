@@ -90,15 +90,21 @@ class PostgresDB {
         try {
             // Check if admin exists
             const adminCheck = await client.query('SELECT * FROM users WHERE username = $1', ['Kevin Owusu']);
+            console.log('Admin check result:', adminCheck.rows.length);
             
             if (adminCheck.rows.length === 0) {
                 const hashedPassword = await bcrypt.hash('12448', 10);
+                console.log('Creating default admin user...');
                 await client.query(
                     'INSERT INTO users (username, password, role) VALUES ($1, $2, $3)',
                     ['Kevin Owusu', hashedPassword, 'admin']
                 );
-                console.log('Default admin user created');
+                console.log('Default admin user created successfully');
+            } else {
+                console.log('Default admin user already exists');
             }
+        } catch (error) {
+            console.error('Error creating default admin:', error);
         } finally {
             client.release();
         }
@@ -118,8 +124,16 @@ class PostgresDB {
     async getUserByUsername(username) {
         const client = await this.pool.connect();
         try {
+            console.log('Looking up user:', username);
             const result = await client.query('SELECT * FROM users WHERE username = $1', [username]);
+            console.log('Query result rows:', result.rows.length);
+            if (result.rows.length > 0) {
+                console.log('Found user with role:', result.rows[0].role);
+            }
             return result.rows[0] || null;
+        } catch (error) {
+            console.error('Error in getUserByUsername:', error);
+            throw error;
         } finally {
             client.release();
         }
