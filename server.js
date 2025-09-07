@@ -100,65 +100,88 @@ setInterval(checkOverdueTools, 30 * 60 * 1000);
 setTimeout(checkOverdueTools, 5000);
 
 // Automatic report generation functions
-function generateAutomaticReports() {
-    const fs = require('fs');
-    const path = require('path');
-    
-    // Create reports directory if it doesn't exist
-    const reportsDir = path.join(__dirname, 'reports');
-    if (!fs.existsSync(reportsDir)) {
-        fs.mkdirSync(reportsDir);
-    }
-    
-    console.log('Generating automatic reports...');
-    
-    // Generate 10-day shift reports for all attendants
-    db.all('SELECT * FROM users WHERE role = "attendant"', (err, attendants) => {
-        if (!err && attendants.length > 0) {
+async function generateAutomaticReports() {
+    try {
+        const fs = require('fs');
+        const path = require('path');
+        
+        // Create reports directory if it doesn't exist
+        const reportsDir = path.join(__dirname, 'reports');
+        if (!fs.existsSync(reportsDir)) {
+            fs.mkdirSync(reportsDir);
+        }
+        
+        console.log('Generating automatic reports...');
+        
+        // Generate 10-day shift reports for all attendants
+        const users = await cloudinaryDB.getUsers();
+        const attendants = users.filter(user => user.role === 'attendant');
+        
+        if (attendants.length > 0) {
+            const toolIssuances = await cloudinaryDB.getToolIssuances();
+            const tools = await cloudinaryDB.getTools();
+            
             attendants.forEach(attendant => {
                 const tenDaysAgo = new Date();
                 tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
                 
-                db.all(`
-                    SELECT ti.*, t.description as tool_description 
-                    FROM tool_issuances ti 
-                    LEFT JOIN tools t ON ti.tool_code = t.tool_code 
-                    WHERE ti.attendant_name = ? AND ti.date >= ? 
-                    ORDER BY ti.date DESC
-                `, [attendant.username, tenDaysAgo.toISOString().split('T')[0]], (err, data) => {
-                    if (!err && data.length > 0) {
-                        const fileName = `10-day-report-${attendant.username.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`;
-                        const filePath = path.join(reportsDir, fileName);
-                        
-                        // Generate PDF report
-                        const PDFDocument = require('pdfkit');
-                        const doc = new PDFDocument({ margin: 50 });
-                        const stream = fs.createWriteStream(filePath);
-                        doc.pipe(stream);
-                        
-                        generatePDFContent(doc, data, attendant, `10-Day Shift Report - ${attendant.username}`);
-                        doc.end();
-                        
-                        console.log(`Generated 10-day report for ${attendant.username}: ${fileName}`);
-                    }
+                // Filter issuances for this attendant in the last 10 days
+                const attendantData = toolIssuances.filter(issuance => {
+                    const issueDate = new Date(issuance.date);
+                    return issuance.attendant_name === attendant.username && 
+                           issueDate >= tenDaysAgo;
                 });
+                
+                // Add tool descriptions
+                const dataWithDescriptions = attendantData.map(issuance => {
+                    const tool = tools.find(t => t.tool_code === issuance.tool_code);
+                    return {
+                        ...issuance,
+                        tool_description: tool ? tool.description : issuance.tool_description
+                    };
+                });
+                
+                if (dataWithDescriptions.length > 0) {
+                    const fileName = `10-day-report-${attendant.username.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`;
+                    const filePath = path.join(reportsDir, fileName);
+                    
+                    // Generate PDF report
+                    const PDFDocument = require('pdfkit');
+                    const doc = new PDFDocument({ margin: 50 });
+                    const stream = fs.createWriteStream(filePath);
+                    doc.pipe(stream);
+                    
+                    generatePDFContent(doc, dataWithDescriptions, attendant, `10-Day Shift Report - ${attendant.username}`);
+                    doc.end();
+                    
+                    console.log(`Generated 10-day report for ${attendant.username}: ${fileName}`);
+                }
             });
         }
-    });
-    
-    // Generate monthly admin report
-    const firstDayOfMonth = new Date();
-    firstDayOfMonth.setDate(1);
-    
-    db.all(`
-        SELECT ti.*, t.description as tool_description, u.username as attendant_name 
-        FROM tool_issuances ti 
-        LEFT JOIN tools t ON ti.tool_code = t.tool_code 
-        LEFT JOIN users u ON ti.attendant_name = u.username 
-        WHERE ti.date >= ? 
-        ORDER BY ti.date DESC
-    `, [firstDayOfMonth.toISOString().split('T')[0]], (err, data) => {
-        if (!err && data.length > 0) {
+        
+        // Generate monthly admin report
+        const firstDayOfMonth = new Date();
+        firstDayOfMonth.setDate(1);
+        
+        const toolIssuances = await cloudinaryDB.getToolIssuances();
+        const tools = await cloudinaryDB.getTools();
+        
+        // Filter issuances for this month
+        const monthlyData = toolIssuances.filter(issuance => {
+            const issueDate = new Date(issuance.date);
+            return issueDate >= firstDayOfMonth;
+        });
+        
+        // Add tool descriptions
+        const monthlyDataWithDescriptions = monthlyData.map(issuance => {
+            const tool = tools.find(t => t.tool_code === issuance.tool_code);
+            return {
+                ...issuance,
+                tool_description: tool ? tool.description : issuance.tool_description
+            };
+        });
+        
+        if (monthlyDataWithDescriptions.length > 0) {
             const fileName = `monthly-admin-report-${new Date().toISOString().split('T')[0]}.pdf`;
             const filePath = path.join(reportsDir, fileName);
             
@@ -168,12 +191,14 @@ function generateAutomaticReports() {
             doc.pipe(stream);
             
             const adminUser = { username: 'System', role: 'admin' };
-            generatePDFContent(doc, data, adminUser, 'Monthly Admin Report');
+            generatePDFContent(doc, monthlyDataWithDescriptions, adminUser, 'Monthly Admin Report');
             doc.end();
             
             console.log(`Generated monthly admin report: ${fileName}`);
         }
-    });
+    } catch (error) {
+        console.error('Error generating automatic reports:', error);
+    }
 }
 
 // Helper function to generate PDF content
