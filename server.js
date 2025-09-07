@@ -683,55 +683,90 @@ app.get('/api/export/issuances', requireAuth, (req, res) => {
 // Generate reports
 app.get('/api/reports/10-day', requireAdmin, async (req, res) => {
     try {
+        console.log('10-day report requested by:', req.session.user?.username);
         const tenDaysAgo = new Date();
         tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
         
+        console.log('Fetching data from:', tenDaysAgo.toISOString(), 'to:', new Date().toISOString());
         const results = await postgresDB.getToolIssuancesByDateRange(tenDaysAgo, new Date());
+        console.log('Raw results count:', results.length);
+        
         const filteredResults = results.filter(item => 
-            item.condition_returned && ['Damaged', 'Needs Repair', 'Lost/Missing'].includes(item.condition_returned) ||
+            (item.condition_returned && ['Damaged', 'Needs Repair', 'Lost/Missing'].includes(item.condition_returned)) ||
             item.status === 'issued'
         );
+        console.log('Filtered results count:', filteredResults.length);
         
-        generatePDFReport(res, filteredResults, req.session.user, '10-Day Shift Report');
+        if (!res.headersSent) {
+            generatePDFReport(res, filteredResults, req.session.user, '10-Day Shift Report');
+        }
     } catch (error) {
         console.error('Error generating 10-day report:', error);
-        res.status(500).json({ error: 'Failed to generate report' });
+        if (!res.headersSent) {
+            res.status(500).json({ error: 'Failed to generate report: ' + error.message });
+        }
     }
 });
 
 app.get('/api/reports/monthly', requireAdmin, async (req, res) => {
     try {
+        console.log('Monthly report requested by:', req.session.user?.username);
         const firstDayOfMonth = new Date();
         firstDayOfMonth.setDate(1);
         
+        console.log('Fetching monthly data from:', firstDayOfMonth.toISOString());
         const results = await postgresDB.getToolIssuancesByDateRange(firstDayOfMonth, new Date());
+        console.log('Monthly results count:', results.length);
         
-        generatePDFReport(res, results, req.session.user, 'Monthly Audit Report');
+        if (!res.headersSent) {
+            generatePDFReport(res, results, req.session.user, 'Monthly Audit Report');
+        }
     } catch (error) {
         console.error('Error generating monthly report:', error);
-        res.status(500).json({ error: 'Failed to generate report' });
+        if (!res.headersSent) {
+            res.status(500).json({ error: 'Failed to generate report: ' + error.message });
+        }
     }
 });
 
 // PDF Generation Function
 function generatePDFReport(res, data, user, reportTitle = 'Tool Issuance Report') {
-    const PDFDocument = require('pdfkit');
-    const doc = new PDFDocument({ margin: 50 });
-    
-    // Set response headers
-    res.setHeader('Content-Type', 'application/pdf');
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-    res.setHeader('Content-Disposition', `attachment; filename="Rabotec_Maintenance_Tools_Audit_${timestamp}.pdf"`);
-    
-    // Pipe the PDF to response
-    doc.pipe(res);
-    
-    // Add logo (if exists)
     try {
-        doc.image('public/images/logo.jpeg', 50, 50, { width: 160, height: 70 });
-    } catch (e) {
-        console.log('Logo not found, skipping...');
-    }
+        console.log('Starting PDF generation for:', reportTitle);
+        console.log('Data length:', data ? data.length : 0);
+        console.log('User:', user ? user.username : 'No user');
+        
+        const PDFDocument = require('pdfkit');
+        const doc = new PDFDocument({ margin: 50 });
+        
+        // Set response headers
+        res.setHeader('Content-Type', 'application/pdf');
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+        res.setHeader('Content-Disposition', `attachment; filename="Rabotec_Maintenance_Tools_Audit_${timestamp}.pdf"`);
+        
+        // Pipe the PDF to response
+        doc.pipe(res);
+        
+        console.log('PDF headers set and piped to response');
+        
+        // Handle empty data case
+        if (!data || data.length === 0) {
+            console.log('No data provided, creating empty report');
+            data = [];
+        }
+    
+        // Add logo (if exists)
+        try {
+            const fs = require('fs');
+            const logoPath = path.join(__dirname, 'public', 'images', 'logo.jpeg');
+            if (fs.existsSync(logoPath)) {
+                doc.image(logoPath, 50, 50, { width: 160, height: 70 });
+            } else {
+                console.log('Logo file not found at:', logoPath);
+            }
+        } catch (e) {
+            console.log('Logo loading error:', e.message);
+        }
     
     // Add header
     doc.fontSize(20).font('Helvetica-Bold');
@@ -787,6 +822,12 @@ function generatePDFReport(res, data, user, reportTitle = 'Tool Issuance Report'
     });
     
     yPosition += 20;
+    
+    // Add message if no data
+    if (data.length === 0) {
+        doc.fontSize(12).fillColor('#666666');
+        doc.text('No tool issuances found for the selected period.', 50, yPosition + 20);
+    }
     
     // Table data with borders and highlighting
     doc.font('Helvetica').fontSize(8);
@@ -885,7 +926,15 @@ function generatePDFReport(res, data, user, reportTitle = 'Tool Issuance Report'
     // Add footer
     doc.fontSize(8).text('© 2024 Rabotec Ghana Limited. All rights reserved.', 50, doc.page.height - 50);
     
+    console.log('Finalizing PDF document');
     doc.end();
+    console.log('PDF generation completed successfully');
+    } catch (error) {
+        console.error('Error in PDF generation:', error);
+        if (!res.headersSent) {
+            res.status(500).json({ error: 'PDF generation failed: ' + error.message });
+        }
+    }
 }
 
 // Helper function to check if shift has ended
