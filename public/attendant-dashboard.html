@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tool Attendant Dashboard - Rabotec Tool Management</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Mobile Menu Button -->
+        <button class="mobile-menu-btn" id="mobileMenuBtn">
+            <i class="fas fa-bars"></i>
+        </button>
+        
+        <!-- Mobile Overlay -->
+        <div class="mobile-overlay" id="mobileOverlay"></div>
+        
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <button class="sidebar-close-btn" id="sidebarCloseBtn">
+                    <i class="fas fa-times"></i>
+                </button>
+                <img src="images/logo.jpeg" alt="Rabotec Ghana Limited" class="sidebar-logo">
+                <h3 class="sidebar-title">Tool Attendant</h3>
+                <p class="sidebar-subtitle">Tool Management System</p>
+                <div class="mt-2">
+                    <div class="text-sm" style="color: rgba(255,255,255,0.8);">
+                        <div id="attendantInfo">Loading...</div>
+                        <div id="shiftInfo">Loading...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-item">
+                    <a href="#issuance" class="nav-link active" data-page="issuance">
+                        <i class="fas fa-clipboard-list nav-icon"></i>
+                        Tool Issuance
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#my-records" class="nav-link" data-page="my-records">
+                        <i class="fas fa-history nav-icon"></i>
+                        My Records
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#tools-list" class="nav-link" data-page="tools-list">
+                        <i class="fas fa-tools nav-icon"></i>
+                        Available Tools
+                    </a>
+                </div>
+                <div class="nav-item" style="margin-top: 30px;">
+                    <a href="#" class="nav-link" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt nav-icon"></i>
+                        Logout
+                    </a>
+                </div>
+            </nav>
+            
+            <!-- Mobile User Info -->
+            <div class="sidebar-user-info">
+                <div class="user-name" id="sidebarUserName">Loading...</div>
+                <div class="user-role" id="sidebarUserRole">Tool Attendant</div>
+                <button class="logout-btn" id="sidebarLogoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <h1 class="header-title" id="pageTitle">Tool Issuance</h1>
+                <div class="header-actions">
+                    <div class="user-info">
+                        <i class="fas fa-user"></i>
+                        <span id="currentUser">Loading...</span>
+                    </div>
+                    <button class="btn btn-secondary" id="exportRecordsBtn">
+                        <i class="fas fa-download"></i> Export Records
+                    </button>
+                </div>
+            </div>
+
+            <div class="content">
+                <!-- Tool Issuance Page -->
+                <div id="issuance-page" class="page-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-clipboard-list"></i>
+                                Rabotec Maintenance Tools Audit - Tool Issuance Form
+                            </h3>
+                            <div class="text-sm" style="color: var(--text-light);">
+                                <div id="formAttendantInfo">Loading...</div>
+                                <div id="formShiftInfo">Loading...</div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <form id="issuanceForm">
+                                <div class="form-row">
+                                    <div class="form-col">
+                                        <label class="form-label">Date</label>
+                                        <input type="date" id="issueDate" class="form-input" required>
+                                    </div>
+                                    <div class="form-col">
+                                        <label class="form-label">Time Out</label>
+                                        <input type="time" id="timeOut" class="form-input" required>
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-col">
+                                        <label class="form-label">Tool Code/ID</label>
+                                        <select id="toolCode" class="form-select" required>
+                                            <option value="">Select Tool</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-col">
+                                        <label class="form-label">Tool Description</label>
+                                        <input type="text" id="toolDescription" class="form-input" readonly>
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-col">
+                                        <label class="form-label">Quantity</label>
+                                        <input type="number" id="quantity" class="form-input" min="1" required>
+                                        <small class="text-sm" style="color: var(--text-light);">
+                                            Available: <span id="availableQuantity">0</span>
+                                        </small>
+                                    </div>
+                                    <div class="form-col">
+                                        <label class="form-label">Department</label>
+                                        <select id="department" class="form-select" required>
+                                            <option value="">Select Department</option>
+                                            <option value="electrical">Electrical</option>
+                                            <option value="welding">Welding</option>
+                                            <option value="service men">Service Men</option>
+                                            <option value="mechanical">Mechanical</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-col">
+                                        <label class="form-label">Issued To (Name)</label>
+                                        <input type="text" id="issuedToName" class="form-input" required>
+                                    </div>
+                                    <div class="form-col">
+                                        <label class="form-label">Issued To (ID)</label>
+                                        <input type="text" id="issuedToId" class="form-input" required>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Comments (Optional)</label>
+                                    <textarea id="comments" class="form-textarea" placeholder="Any additional notes or comments..."></textarea>
+                                </div>
+
+                                <div class="d-flex gap-2 justify-between">
+                                    <button type="button" class="btn btn-secondary" id="clearForm">
+                                        <i class="fas fa-eraser"></i> Clear Form
+                                    </button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-plus"></i> Issue Tool
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Current Shift Summary -->
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h3 class="card-title">Current Shift Summary</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div class="stat-number" id="shiftIssuances">0</div>
+                                    <div class="stat-label">Tools Issued Today</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number" id="shiftReturns">0</div>
+                                    <div class="stat-label">Tools Returned Today</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number" id="shiftPending">0</div>
+                                    <div class="stat-label">Pending Returns</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number" id="shiftOverdue">0</div>
+                                    <div class="stat-label">Overdue Returns</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- My Records Page -->
+                <div id="my-records-page" class="page-content d-none">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">My Tool Issuance Records</h3>
+                            <div class="d-flex gap-1">
+                                <button class="btn btn-secondary" id="exportMyRecordsBtn">
+                                    <i class="fas fa-file-pdf"></i> Export PDF
+                                </button>
+                                <button class="btn btn-success" id="exportMyRecordsExcelBtn">
+                                    <i class="fas fa-file-excel"></i> Export Excel
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-2">
+                                <div class="form-row">
+                                    <div class="form-col">
+                                        <label class="form-label">Filter by Date Range</label>
+                                        <input type="date" id="filterStartDate" class="form-input">
+                                    </div>
+                                    <div class="form-col">
+                                        <label class="form-label">&nbsp;</label>
+                                        <input type="date" id="filterEndDate" class="form-input">
+                                    </div>
+                                    <div class="form-col">
+                                        <label class="form-label">&nbsp;</label>
+                                        <button class="btn btn-primary" id="applyFilter">
+                                            <i class="fas fa-filter"></i> Apply Filter
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="table-container">
+                                <table class="table" id="myRecordsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Tool Code/ID</th>
+                                            <th>Tool Description</th>
+                                            <th>Quantity</th>
+                                            <th>Issued To Name/ID</th>
+                                            <th>Department</th>
+                                            <th>Time Out</th>
+                                            <th>Time In</th>
+                                            <th>Condition Returned</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Available Tools Page -->
+                <div id="tools-list-page" class="page-content d-none">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Available Tools</h3>
+                            <div class="form-group" style="margin: 0; width: 300px;">
+                                <input type="text" id="toolSearch" class="form-input" placeholder="Search tools...">
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-container">
+                                <table class="table" id="availableToolsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Tool Code</th>
+                                            <th>Description</th>
+                                            <th>Total Quantity</th>
+                                            <th>Available</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Return Tool Modal -->
+    <div id="returnModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Return Tool</h3>
+                <span class="close" id="closeReturnModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="returnForm">
+                    <input type="hidden" id="returnIssuanceId">
+                    
+                    <div class="form-group">
+                        <label class="form-label">Tool Information</label>
+                        <div id="returnToolInfo" class="p-3" style="background-color: #f8fafc; border-radius: 8px; margin-bottom: 15px;">
+                            <!-- Tool info will be populated here -->
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Time In</label>
+                        <input type="time" id="timeIn" class="form-input" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Condition Returned</label>
+                        <select id="conditionReturned" class="form-select" required>
+                            <option value="">Select Condition</option>
+                            <option value="Good">Good</option>
+                            <option value="Fair">Fair</option>
+                            <option value="Damaged">Damaged</option>
+                            <option value="Needs Repair">Needs Repair</option>
+                            <option value="Lost/Missing">Lost/Missing</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Additional Comments</label>
+                        <textarea id="returnComments" class="form-textarea" placeholder="Any additional notes about the tool condition..."></textarea>
+                    </div>
+
+                    <div class="d-flex gap-1 justify-between">
+                        <button type="button" class="btn btn-secondary" id="cancelReturn">Cancel</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check"></i> Mark as Returned
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/attendant-dashboard.js"></script>
+</body>
+</html>

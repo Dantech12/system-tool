@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Rabotec Tool Management</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Mobile Menu Button -->
+        <button class="mobile-menu-btn" id="mobileMenuBtn">
+            <i class="fas fa-bars"></i>
+        </button>
+        
+        <!-- Mobile Overlay -->
+        <div class="mobile-overlay" id="mobileOverlay"></div>
+        
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <button class="sidebar-close-btn" id="sidebarCloseBtn">
+                    <i class="fas fa-times"></i>
+                </button>
+                <img src="images/logo.jpeg" alt="Rabotec Ghana Limited" class="sidebar-logo">
+                <h3 class="sidebar-title">Admin Dashboard</h3>
+                <p class="sidebar-subtitle">Tool Management System</p>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-item">
+                    <a href="#dashboard" class="nav-link active" data-page="dashboard">
+                        <i class="fas fa-tachometer-alt nav-icon"></i>
+                        Dashboard
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#tools" class="nav-link" data-page="tools">
+                        <i class="fas fa-tools nav-icon"></i>
+                        Manage Tools
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#users" class="nav-link" data-page="users">
+                        <i class="fas fa-users nav-icon"></i>
+                        Manage Attendants
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#issuances" class="nav-link" data-page="issuances">
+                        <i class="fas fa-clipboard-list nav-icon"></i>
+                        Tool Issuances
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#reports" class="nav-link" data-page="reports">
+                        <i class="fas fa-chart-bar nav-icon"></i>
+                        Reports
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#help" class="nav-link" data-page="help">
+                        <i class="fas fa-question-circle nav-icon"></i>
+                        Help & Instructions
+                    </a>
+                </div>
+                <div class="nav-item" style="margin-top: 30px;">
+                    <a href="#" class="nav-link" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt nav-icon"></i>
+                        Logout
+                    </a>
+                </div>
+            </nav>
+            
+            <!-- Mobile User Info -->
+            <div class="sidebar-user-info">
+                <div class="user-name" id="sidebarUserName">Kevin Owusu</div>
+                <div class="user-role" id="sidebarUserRole">Admin</div>
+                <button class="logout-btn" id="sidebarLogoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <h1 class="header-title" id="pageTitle">Dashboard</h1>
+                <div class="header-actions">
+                    <div class="user-info">
+                        <i class="fas fa-user-shield"></i>
+                        <span id="currentUser">Kevin Owusu (Admin)</span>
+                    </div>
+                    <button class="btn btn-secondary" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+
+            <div class="content">
+                <!-- Dashboard Page -->
+                <div id="dashboard-page" class="page-content">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalTools">0</div>
+                            <div class="stat-label">Total Tools</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="issuedTools">0</div>
+                            <div class="stat-label">Tools Issued</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="overdueTools">0</div>
+                            <div class="stat-label">Overdue Returns</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalAttendants">0</div>
+                            <div class="stat-label">Active Attendants</div>
+                        </div>
+                    </div>
+
+                    <!-- Overdue Tools Alert -->
+                    <div id="overdueAlert" class="card" style="display: none; border-left: 4px solid #e74c3c; background: #fdf2f2;">
+                        <div class="card-header" style="background: #fdf2f2;">
+                            <h3 class="card-title" style="color: #e74c3c;">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Overdue Tool Returns
+                            </h3>
+                            <span id="overdueCount" class="badge" style="background: #e74c3c; color: white; padding: 4px 8px; border-radius: 12px;">0</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-container">
+                                <table class="table" id="overdueToolsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Employee</th>
+                                            <th>Tool</th>
+                                            <th>Department</th>
+                                            <th>Hours Overdue</th>
+                                            <th>Shift End</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Recent Tool Issuances</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-container">
+                                <table class="table" id="recentIssuancesTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Tool</th>
+                                            <th>Issued To</th>
+                                            <th>Department</th>
+                                            <th>Attendant</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tools Management Page -->
+                <div id="tools-page" class="page-content d-none">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Tool Management</h3>
+                            <div class="d-flex gap-1">
+                                <button class="btn btn-secondary" id="importToolsBtn">
+                                    <i class="fas fa-file-excel"></i> Import Excel
+                                </button>
+                                <button class="btn btn-primary" id="addToolBtn">
+                                    <i class="fas fa-plus"></i> Add Tool
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-container">
+                                <table class="table" id="toolsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Tool Code</th>
+                                            <th>Description</th>
+                                            <th>Total Quantity</th>
+                                            <th>Available</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Users Management Page -->
+                <div id="users-page" class="page-content d-none">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Tool Attendants Management</h3>
+                            <button class="btn btn-primary" id="addUserBtn">
+                                <i class="fas fa-user-plus"></i> Add Attendant
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-container">
+                                <table class="table" id="usersTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Username</th>
+                                            <th>Shift</th>
+                                            <th>Shift Time</th>
+                                            <th>Created</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tool Issuances Page -->
+                <div id="issuances-page" class="page-content d-none">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">All Tool Issuances</h3>
+                            <button class="btn btn-secondary" id="exportIssuancesBtn">
+                                <i class="fas fa-download"></i> Export Report
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-container">
+                                <table class="table" id="allIssuancesTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Tool Code</th>
+                                            <th>Description</th>
+                                            <th>Quantity</th>
+                                            <th>Issued To</th>
+                                            <th>Department</th>
+                                            <th>Time Out</th>
+                                            <th>Time In</th>
+                                            <th>Condition</th>
+                                            <th>Attendant</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reports Page -->
+                <div id="reports-page" class="page-content d-none">
+                    <div class="reports-container">
+                        <!-- Quick Reports Section -->
+                        <div class="card report-card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-chart-line"></i> Quick Reports
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="report-buttons">
+                                    <button class="btn btn-primary report-btn" id="generate10DayReport">
+                                        <div class="report-btn-content">
+                                            <i class="fas fa-calendar-week"></i>
+                                            <div>
+                                                <div class="report-title">10-Day Shift Report</div>
+                                                <div class="report-desc">Tools damaged, spoilt, or missing</div>
+                                            </div>
+                                        </div>
+                                    </button>
+                                    <button class="btn btn-secondary report-btn" id="generateMonthlyReport">
+                                        <div class="report-btn-content">
+                                            <i class="fas fa-calendar-alt"></i>
+                                            <div>
+                                                <div class="report-title">Monthly Audit Report</div>
+                                                <div class="report-desc">Comprehensive monthly overview</div>
+                                            </div>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Custom Report Generator -->
+                        <div class="card report-card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-filter"></i> Custom Report Generator
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="filter-section">
+                                    <div class="form-row">
+                                        <div class="form-col">
+                                            <label class="form-label">Start Date</label>
+                                            <input type="date" id="reportStartDate" class="form-input">
+                                        </div>
+                                        <div class="form-col">
+                                            <label class="form-label">End Date</label>
+                                            <input type="date" id="reportEndDate" class="form-input">
+                                        </div>
+                                        <div class="form-col">
+                                            <label class="form-label">Shift Filter</label>
+                                            <select id="reportShift" class="form-select">
+                                                <option value="">All Shifts</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-success mt-2" id="generateCustomReport">
+                                        <i class="fas fa-file-pdf"></i> Generate Custom Report
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Export Information -->
+                        <div class="card report-card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-download"></i> Export Information
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="export-info">
+                                    <div class="export-item">
+                                        <i class="fas fa-file-pdf"></i>
+                                        <div>
+                                            <strong>PDF Reports</strong>
+                                            <p>Professional formatted reports with company branding and logo</p>
+                                        </div>
+                                    </div>
+                                    <div class="export-item">
+                                        <i class="fas fa-file-excel"></i>
+                                        <div>
+                                            <strong>Excel Reports</strong>
+                                            <p>Spreadsheet format for data analysis and manipulation</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Help Page -->
+                <div id="help-page" class="page-content d-none">
+                    <div class="help-container">
+                        <!-- Getting Started -->
+                        <div class="card help-card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-rocket"></i> Getting Started
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="help-intro">
+                                    <p>Welcome to the <strong>Rabotec Tool Management System</strong>. This comprehensive system helps you efficiently manage tool inventory, track issuances, and generate detailed reports for audit purposes.</p>
+                                </div>
+                                <div class="feature-list">
+                                    <div class="feature-item">
+                                        <i class="fas fa-check-circle"></i>
+                                        <span>Real-time tool tracking</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <i class="fas fa-check-circle"></i>
+                                        <span>Automated reporting</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <i class="fas fa-check-circle"></i>
+                                        <span>Multi-shift management</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tool Management -->
+                        <div class="card help-card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-tools"></i> Tool Management
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="help-section">
+                                    <div class="help-item">
+                                        <div class="help-icon">
+                                            <i class="fas fa-plus-circle"></i>
+                                        </div>
+                                        <div>
+                                            <strong>Add Tools</strong>
+                                            <p>Click "Add Tool" to manually add new tools with code, description, and quantity.</p>
+                                        </div>
+                                    </div>
+                                    <div class="help-item">
+                                        <div class="help-icon">
+                                            <i class="fas fa-file-excel"></i>
+                                        </div>
+                                        <div>
+                                            <strong>Import Tools</strong>
+                                            <p>Use "Import Excel" for bulk import. Format: tool_code, description, quantity columns.</p>
+                                        </div>
+                                    </div>
+                                    <div class="help-item">
+                                        <div class="help-icon">
+                                            <i class="fas fa-edit"></i>
+                                        </div>
+                                        <div>
+                                            <strong>Edit Tools</strong>
+                                            <p>Use action buttons to modify tool details. Click edit to update information.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- User Management -->
+                        <div class="card help-card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-users"></i> Attendant Management
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="help-section">
+                                    <div class="help-item">
+                                        <div class="help-icon">
+                                            <i class="fas fa-user-plus"></i>
+                                        </div>
+                                        <div>
+                                            <strong>Create Attendants</strong>
+                                            <p>Add new tool attendants with unique usernames and shift assignments (A-Z).</p>
+                                        </div>
+                                    </div>
+                                    <div class="help-item">
+                                        <div class="help-icon">
+                                            <i class="fas fa-clock"></i>
+                                        </div>
+                                        <div>
+                                            <strong>Shift Times</strong>
+                                            <p>Morning: 6:30am-18:30pm | Evening: 18:30pm-6:30am</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Reports & Analytics -->
+                        <div class="card help-card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-chart-bar"></i> Reports & Analytics
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="help-section">
+                                    <div class="help-item">
+                                        <div class="help-icon">
+                                            <i class="fas fa-calendar-week"></i>
+                                        </div>
+                                        <div>
+                                            <strong>10-Day Reports</strong>
+                                            <p>Generate reports for damaged, spoilt, or missing tools over 10-day periods.</p>
+                                        </div>
+                                    </div>
+                                    <div class="help-item">
+                                        <div class="help-icon">
+                                            <i class="fas fa-calendar-alt"></i>
+                                        </div>
+                                        <div>
+                                            <strong>Monthly Reports</strong>
+                                            <p>Comprehensive monthly audit reports with full system overview.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Important Guidelines -->
+                        <div class="card help-card warning-card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-exclamation-triangle"></i> Important Guidelines
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="warning-list">
+                                    <div class="warning-item">
+                                        <i class="fas fa-shield-alt"></i>
+                                        <span>Only administrators can add, edit, or delete tools and attendants</span>
+                                    </div>
+                                    <div class="warning-item">
+                                        <i class="fas fa-user-lock"></i>
+                                        <span>Attendants can only issue tools and view their own records</span>
+                                    </div>
+                                    <div class="warning-item">
+                                        <i class="fas fa-certificate"></i>
+                                        <span>All exported documents include company logo and branding</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Support -->
+                        <div class="card help-card support-card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-headset"></i> Technical Support
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="support-info">
+                                    <i class="fas fa-phone"></i>
+                                    <div>
+                                        <strong>Need Help?</strong>
+                                        <p>For technical support or questions about the system, contact the IT department or system administrator.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Add/Edit Tool Modal -->
+    <div id="toolModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="toolModalTitle">Add Tool</h3>
+                <span class="close" id="closeToolModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="toolForm">
+                    <input type="hidden" id="toolId">
+                    <div class="form-group">
+                        <label class="form-label">Tool Code/ID</label>
+                        <input type="text" id="toolCode" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <input type="text" id="toolDescription" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Quantity</label>
+                        <input type="number" id="toolQuantity" class="form-input" min="1" required>
+                    </div>
+                    <div class="d-flex gap-1 justify-between">
+                        <button type="button" class="btn btn-secondary" id="cancelTool">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Tool</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add Tool Attendant</h3>
+                <span class="close" id="closeUserModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="userForm">
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <input type="text" id="attendantUsername" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" id="attendantPassword" class="form-input" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label class="form-label">Shift</label>
+                            <select id="attendantShift" class="form-select" required>
+                                <option value="">Select Shift</option>
+                            </select>
+                        </div>
+                        <div class="form-col">
+                            <label class="form-label">Shift Time</label>
+                            <select id="attendantShiftTime" class="form-select" required>
+                                <option value="">Select Time</option>
+                                <option value="morning">Morning (6:30am - 18:30pm)</option>
+                                <option value="evening">Evening (18:30pm - 6:30am)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-1 justify-between">
+                        <button type="button" class="btn btn-secondary" id="cancelUser">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Create Attendant</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Tools Modal -->
+    <div id="importModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Import Tools from Excel</h3>
+                <span class="close" id="closeImportModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="importForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label class="form-label">Excel File</label>
+                        <input type="file" id="excelFile" class="form-input" accept=".xlsx,.xls" required>
+                        <small class="text-sm" style="color: var(--text-light);">
+                            Excel file should have columns: tool_code, description, quantity
+                        </small>
+                    </div>
+                    <div class="d-flex gap-1 justify-between">
+                        <button type="button" class="btn btn-secondary" id="cancelImport">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Import Tools</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/admin-dashboard.js"></script>
+</body>
+</html>
