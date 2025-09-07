@@ -83,7 +83,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 1. Click "Create Web Service"
 2. Render will automatically deploy your application
 3. Wait for the build to complete (usually 2-5 minutes)
-4. Your app will be available at: `https://rabotec-tool-system.onrender.com`
+4. Your app will be available at: `https://your-app-name.onrender.com`
 
 ## Step 4: Test Your Deployment
 
@@ -94,6 +94,8 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ### 4.2 Login as Admin
 - **Username**: Kevin Owusu
 - **Password**: 12448
+
+**Note**: These are the actual production credentials, not the generic ones shown in the README.
 
 ### 4.3 Test Core Features
 1. **Admin Dashboard**: Check if statistics load correctly

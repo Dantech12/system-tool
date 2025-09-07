@@ -53,61 +53,44 @@ function calculateShiftTimes(shiftTime, date = new Date()) {
 }
 
 // Function to check for overdue tools
-function checkOverdueTools() {
-    const now = new Date();
-    
-    db.all(`
-        SELECT * FROM tool_issuances 
-        WHERE status = 'issued' 
-        AND shift_end_time < ? 
-        AND is_overdue = 0
-    `, [now.toISOString()], (err, rows) => {
-        if (err) {
-            console.error('Error checking overdue tools:', err);
-            return;
+async function checkOverdueTools() {
+    try {
+        const now = new Date();
+        const issuances = await cloudinaryDB.getToolIssuances();
+        
+        const overdueItems = issuances.filter(item => {
+            if (item.status !== 'issued' || item.is_overdue) return false;
+            
+            // Check if shift has ended
+            if (item.shift_end_time) {
+                const shiftEndTime = new Date(item.shift_end_time);
+                return now > shiftEndTime;
+            }
+            return false;
+        });
+        
+        for (const item of overdueItems) {
+            item.is_overdue = true;
+            item.overdue_since = now.toISOString();
+            console.log(`Tool ${item.tool_code} issued to ${item.issued_to_name} is now overdue`);
         }
         
-        rows.forEach(row => {
-            // Mark as overdue
-            db.run(`
-                UPDATE tool_issuances 
-                SET is_overdue = 1, overdue_since = ? 
-                WHERE id = ?
-            `, [now.toISOString(), row.id], (updateErr) => {
-                if (updateErr) {
-                    console.error('Error updating overdue status:', updateErr);
-                } else {
-                    console.log(`Tool ${row.tool_code} issued to ${row.issued_to_name} is now overdue`);
-                }
-            });
-        });
-    });
+        if (overdueItems.length > 0) {
+            await cloudinaryDB.updateToolIssuances(issuances);
+        }
+    } catch (error) {
+        console.error('Error checking overdue tools:', error);
+    }
 }
 
-// Function to get overdue tools
-function getOverdueTools(callback) {
-    db.all(`
-        SELECT 
-            id,
-            tool_code,
-            tool_description,
-            issued_to_name,
-            issued_to_id,
-            department,
-            attendant_name,
-            attendant_shift,
-            shift_day,
-            date,
-            time_out,
-            shift_end_time,
-            overdue_since,
-            quantity,
-            comments,
-            ROUND((julianday('now') - julianday(shift_end_time)) * 24, 1) as hours_overdue
-        FROM tool_issuances 
-        WHERE status = 'issued' AND is_overdue = 1
-        ORDER BY overdue_since ASC
-    `, callback);
+// Function to get overdue tools (legacy - now handled by CloudinaryDB)
+async function getOverdueTools() {
+    try {
+        return await cloudinaryDB.getOverdueTools();
+    } catch (error) {
+        console.error('Error getting overdue tools:', error);
+        return [];
+    }
 }
 
 // Start overdue checking timer (check every 30 minutes)
