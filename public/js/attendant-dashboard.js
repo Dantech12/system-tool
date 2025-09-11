@@ -5,16 +5,13 @@ let myIssuances = [];
 let shiftDay = 1;
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Set current year
-    document.getElementById('currentYear').textContent = new Date().getFullYear();
-    
-    // Initialize user session
-    checkUserSession();
+    // Check authentication
+    checkAuth();
     
     // Initialize navigation
     initializeNavigation();
     
-    // Initialize forms
+    // Initialize forms and modals
     initializeForms();
     
     // Load initial data
@@ -191,17 +188,12 @@ function initializeForms() {
     // Return modal
     const returnModal = document.getElementById('returnModal');
     const closeReturnModal = document.getElementById('closeReturnModal');
-    document.getElementById('cancelReturn').addEventListener('click', () => {
-        document.getElementById('returnModal').style.display = 'none';
-    });
+    const cancelReturn = document.getElementById('cancelReturn');
+    const returnForm = document.getElementById('returnForm');
     
-    document.getElementById('closeReturnModal').addEventListener('click', () => {
-        document.getElementById('returnModal').style.display = 'none';
-    });
-    
-    document.getElementById('returnStatus').addEventListener('change', handleReturnStatusChange);
-    
-    document.getElementById('returnForm').addEventListener('submit', handleReturnTool);
+    closeReturnModal.addEventListener('click', () => returnModal.style.display = 'none');
+    cancelReturn.addEventListener('click', () => returnModal.style.display = 'none');
+    returnForm.addEventListener('submit', handleReturnSubmit);
     
     // Export buttons
     document.getElementById('exportRecordsBtn').addEventListener('click', exportAllRecords);
@@ -302,7 +294,7 @@ function displayMyRecords(records) {
                 </td>
                 <td>
                     ${issuance.status === 'issued' ? `
-                        <button class="btn btn-success btn-sm" onclick="openReturnModal(${issuance.id})">
+                        <button class="btn btn-success btn-sm" onclick="showReturnModal(${issuance.id})">
                             <i class="fas fa-undo"></i> Return
                         </button>
                     ` : '-'}
@@ -456,128 +448,54 @@ function clearIssuanceForm() {
     document.getElementById('availableQuantity').textContent = '0';
 }
 
-function openReturnModal(issuance) {
-    document.getElementById('returnIssuanceId').value = issuance.id;
+function showReturnModal(issuanceId) {
+    const issuance = myIssuances.find(i => i.id === issuanceId);
+    if (!issuance) return;
     
-    // Populate tool info
-    const toolInfo = `
+    document.getElementById('returnIssuanceId').value = issuanceId;
+    
+    // Set current time
+    const now = new Date();
+    document.getElementById('timeIn').value = now.toTimeString().slice(0, 5);
+    
+    // Display tool info
+    document.getElementById('returnToolInfo').innerHTML = `
         <strong>Tool:</strong> ${issuance.tool_code} - ${issuance.tool_description}<br>
         <strong>Quantity:</strong> ${issuance.quantity}<br>
         <strong>Issued To:</strong> ${issuance.issued_to_name} (${issuance.issued_to_id})<br>
         <strong>Department:</strong> ${issuance.department}<br>
         <strong>Time Out:</strong> ${issuance.time_out}
     `;
-    document.getElementById('returnToolInfo').innerHTML = toolInfo;
-    
-    // Reset form
-    document.getElementById('returnStatus').value = '';
-    document.getElementById('conditionReturned').value = '';
-    document.getElementById('returnComments').value = '';
-    document.getElementById('conditionGroup').style.display = 'none';
-    
-    // Set current time as default
-    const now = new Date();
-    const timeString = now.toTimeString().slice(0, 5);
-    document.getElementById('timeIn').value = timeString;
     
     document.getElementById('returnModal').style.display = 'block';
 }
 
-function handleReturnStatusChange() {
-    const returnStatus = document.getElementById('returnStatus').value;
-    const conditionGroup = document.getElementById('conditionGroup');
-    const timeInField = document.getElementById('timeIn');
-    const submitBtn = document.getElementById('submitReturnText');
-    
-    if (returnStatus === 'returned' || returnStatus === 'returned_damaged') {
-        conditionGroup.style.display = 'block';
-        timeInField.required = true;
-        if (returnStatus === 'returned') {
-            submitBtn.textContent = 'Mark as Returned';
-        } else {
-            submitBtn.textContent = 'Mark as Returned (Damaged)';
-        }
-    } else if (returnStatus === 'lost') {
-        conditionGroup.style.display = 'none';
-        timeInField.required = false;
-        timeInField.value = '';
-        submitBtn.textContent = 'Mark as Lost';
-    } else {
-        conditionGroup.style.display = 'none';
-        timeInField.required = true;
-        submitBtn.textContent = 'Process Return';
-    }
-}
-
-async function handleReturnTool(e) {
+async function handleReturnSubmit(e) {
     e.preventDefault();
     
-    const id = document.getElementById('returnIssuanceId').value;
-    const returnStatus = document.getElementById('returnStatus').value;
-    const timeIn = document.getElementById('timeIn').value;
-    const conditionReturned = document.getElementById('conditionReturned').value;
-    const comments = document.getElementById('returnComments').value;
-    
-    if (!returnStatus) {
-        showAlert('Please select a return status', 'error');
-        return;
-    }
-    
-    // Validate based on return status
-    if ((returnStatus === 'returned' || returnStatus === 'returned_damaged') && !timeIn) {
-        showAlert('Please enter the time in', 'error');
-        return;
-    }
-    
-    let finalStatus, finalCondition, finalTimeIn;
-    
-    switch (returnStatus) {
-        case 'returned':
-            finalStatus = 'returned';
-            finalCondition = conditionReturned || 'Good';
-            finalTimeIn = timeIn;
-            break;
-        case 'returned_damaged':
-            finalStatus = 'returned';
-            finalCondition = conditionReturned || 'Damaged';
-            finalTimeIn = timeIn;
-            break;
-        case 'lost':
-            finalStatus = 'lost';
-            finalCondition = 'Lost/Missing';
-            finalTimeIn = timeIn || new Date().toTimeString().slice(0, 5);
-            break;
-        default:
-            showAlert('Invalid return status', 'error');
-            return;
-    }
+    const issuanceId = document.getElementById('returnIssuanceId').value;
+    const returnData = {
+        time_in: document.getElementById('timeIn').value,
+        condition_returned: document.getElementById('conditionReturned').value
+    };
     
     try {
-        const response = await fetch(`/api/tool-issuances/${id}/return`, {
+        const response = await fetch(`/api/tool-issuances/${issuanceId}/return`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                time_in: finalTimeIn,
-                condition_returned: finalCondition,
-                status: finalStatus,
-                comments: comments
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(returnData)
         });
         
         if (response.ok) {
             document.getElementById('returnModal').style.display = 'none';
-            const statusText = finalStatus === 'lost' ? 'marked as lost' : 'returned';
-            showAlert(`Tool ${statusText} successfully!`, 'success');
+            showAlert('Tool marked as returned!', 'success');
             loadDashboardData(); // Refresh all data
         } else {
             const error = await response.json();
-            showAlert(error.error || 'Failed to process return', 'error');
+            showAlert(error.error || 'Failed to return tool', 'error');
         }
     } catch (error) {
-        console.error('Error processing return:', error);
-        showAlert('Error processing return', 'error');
+        showAlert('Error returning tool', 'error');
     }
 }
 

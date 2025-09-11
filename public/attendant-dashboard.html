@@ -26,11 +26,6 @@
                 <img src="images/logo.jpeg" alt="Rabotec Ghana Limited" class="sidebar-logo">
                 <h3 class="sidebar-title">Tool Attendant</h3>
                 <p class="sidebar-subtitle">Tool Management System</p>
-                <div class="mt-2 text-center">
-                    <p class="text-xs" style="color: rgba(255,255,255,0.6);">
-                        © <span id="currentYear">2025</span> Rabotec Ghana Limited
-                    </p>
-                </div>
                 <div class="mt-2">
                     <div class="text-sm" style="color: rgba(255,255,255,0.8);">
                         <div id="attendantInfo">Loading...</div>
@@ -321,24 +316,14 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Return Status</label>
-                        <select id="returnStatus" class="form-select" required>
-                            <option value="">Select Return Status</option>
-                            <option value="returned">Returned in Good Condition</option>
-                            <option value="returned_damaged">Returned - Damaged</option>
-                            <option value="lost">Lost/Missing</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group" id="conditionGroup" style="display: none;">
-                        <label class="form-label">Condition Details</label>
-                        <select id="conditionReturned" class="form-select">
+                        <label class="form-label">Condition Returned</label>
+                        <select id="conditionReturned" class="form-select" required>
                             <option value="">Select Condition</option>
                             <option value="Good">Good</option>
-                            <option value="Fair">Fair - Minor Wear</option>
-                            <option value="Damaged - Minor">Damaged - Minor</option>
-                            <option value="Damaged - Major">Damaged - Major</option>
+                            <option value="Fair">Fair</option>
+                            <option value="Damaged">Damaged</option>
                             <option value="Needs Repair">Needs Repair</option>
+                            <option value="Lost/Missing">Lost/Missing</option>
                         </select>
                     </div>
 
@@ -349,8 +334,8 @@
 
                     <div class="d-flex gap-1 justify-between">
                         <button type="button" class="btn btn-secondary" id="cancelReturn">Cancel</button>
-                        <button type="submit" class="btn btn-success" id="submitReturnBtn">
-                            <i class="fas fa-check"></i> <span id="submitReturnText">Process Return</span>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check"></i> Mark as Returned
                         </button>
                     </div>
                 </form>
