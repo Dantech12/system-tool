@@ -298,7 +298,7 @@ function displayMyRecords(records) {
                 <td>${issuance.condition_returned || '-'}</td>
                 <td>
                     <span class="badge ${getStatusBadgeClass(issuance.status, isOverdue)}">
-                        ${isOverdue ? 'Overdue' : (issuance.status === 'lost' ? 'Lost' : issuance.status)}
+                        ${isOverdue ? 'Overdue' : getStatusDisplayText(issuance.status)}
                     </span>
                 </td>
                 <td>
@@ -674,6 +674,15 @@ function getStatusBadgeClass(status, isOverdue) {
         case 'returned': return 'badge-success';
         case 'lost': return 'badge-danger';
         default: return 'badge-info';
+    }
+}
+
+function getStatusDisplayText(status) {
+    switch(status) {
+        case 'issued': return 'Issued';
+        case 'returned': return 'Returned';
+        case 'lost': return 'Lost';
+        default: return status;
     }
 }
 

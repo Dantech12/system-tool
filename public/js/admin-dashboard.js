@@ -291,7 +291,7 @@ function loadRecentIssuances() {
                 <td>${issuance.attendant_name} (${issuance.attendant_shift})</td>
                 <td>
                     <span class="badge ${getStatusBadgeClass(issuance.status, isOverdue)}">
-                        ${isOverdue ? 'Overdue' : issuance.status}
+                        ${isOverdue ? 'Overdue' : getStatusDisplayText(issuance.status)}
                     </span>
                 </td>
             </tr>
@@ -314,7 +314,17 @@ function getStatusBadgeClass(status, isOverdue) {
     switch(status) {
         case 'issued': return 'badge-warning';
         case 'returned': return 'badge-success';
+        case 'lost': return 'badge-danger';
         default: return 'badge-info';
+    }
+}
+
+function getStatusDisplayText(status) {
+    switch(status) {
+        case 'issued': return 'Issued';
+        case 'returned': return 'Returned';
+        case 'lost': return 'Lost';
+        default: return status;
     }
 }
 
@@ -392,7 +402,7 @@ async function loadIssuances() {
                     <td>${issuance.attendant_name} (${issuance.attendant_shift})</td>
                     <td>
                         <span class="badge ${getStatusBadgeClass(issuance.status, isOverdue)}">
-                            ${isOverdue ? 'Overdue' : issuance.status}
+                            ${isOverdue ? 'Overdue' : getStatusDisplayText(issuance.status)}
                         </span>
                     </td>
                     <td>
