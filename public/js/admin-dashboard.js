@@ -239,7 +239,7 @@ function contactEmployee(name, id) {
 }
 
 function markOverdueAsCleared(issuanceId) {
-    if (confirm('Mark this overdue tool as cleared? This action cannot be undone.')) {
+    showConfirm('Mark this overdue tool as cleared? This action cannot be undone.', () => {
         fetch(`/api/tool-issuances/${issuanceId}/clear-overdue`, {
             method: 'PUT'
         })
@@ -256,7 +256,7 @@ function markOverdueAsCleared(issuanceId) {
             console.error('Error clearing overdue status:', error);
             showAlert('Error clearing overdue status', 'error');
         });
-    }
+    });
 }
 
 function getOverdueCount() {
@@ -627,22 +627,24 @@ function editTool(toolId) {
 }
 
 async function deleteUser(userId) {
-    if (!confirm('Are you sure you want to delete this attendant?')) return;
-    
-    try {
-        const response = await fetch(`/api/admin/users/${userId}`, {
-            method: 'DELETE'
-        });
-        
-        if (response.ok) {
-            loadUsers();
-            showAlert('Attendant deleted successfully!', 'success');
-        } else {
-            showAlert('Failed to delete attendant', 'error');
+    showConfirm('Are you sure you want to delete this attendant? This action cannot be undone.', async () => {
+        try {
+            const response = await fetch(`/api/admin/users/${userId}`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                showAlert('Attendant deleted successfully!', 'success');
+                loadUsers();
+            } else {
+                const error = await response.json();
+                showAlert(error.error || 'Failed to delete attendant', 'error');
+            }
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            showAlert('Error deleting attendant', 'error');
         }
-    } catch (error) {
-        showAlert('Error deleting attendant', 'error');
-    }
+    });
 }
 
 async function markReturned(issuanceId) {
@@ -671,23 +673,24 @@ async function markReturned(issuanceId) {
 }
 
 async function clearOverdue(issuanceId) {
-    if (!confirm('Clear overdue status for this tool?')) return;
-    
-    try {
-        const response = await fetch(`/api/tool-issuances/${issuanceId}/clear-overdue`, {
-            method: 'PUT'
-        });
-        
-        if (response.ok) {
-            loadIssuances();
-            loadDashboardData();
-            showAlert('Overdue status cleared!', 'success');
-        } else {
-            showAlert('Failed to clear overdue status', 'error');
+    showConfirm('Clear overdue status for this tool?', async () => {
+        try {
+            const response = await fetch(`/api/tool-issuances/${issuanceId}/clear-overdue`, {
+                method: 'PUT'
+            });
+            
+            if (response.ok) {
+                showAlert('Overdue status cleared successfully!', 'success');
+                loadIssuances();
+            } else {
+                const error = await response.json();
+                showAlert(error.error || 'Failed to clear overdue status', 'error');
+            }
+        } catch (error) {
+            console.error('Error clearing overdue status:', error);
+            showAlert('Error clearing overdue status', 'error');
         }
-    } catch (error) {
-        showAlert('Error clearing overdue status', 'error');
-    }
+    });
 }
 
 function generateShiftOptions() {
