@@ -1,5 +1,8 @@
 // Login functionality
 document.addEventListener('DOMContentLoaded', function() {
+    // Set current year
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
+    
     const loginForm = document.getElementById('loginForm');
     const alertContainer = document.getElementById('alert-container');
     const loginText = document.getElementById('login-text');

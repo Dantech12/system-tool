@@ -5,8 +5,16 @@ let users = [];
 let issuances = [];
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Set current year
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
+    
+    // Initialize user session
     checkAuth();
+    
+    // Initialize navigation
     initializeNavigation();
+    
+    // Initialize forms
     initializeModals();
     
     // Load initial data
