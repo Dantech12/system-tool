@@ -199,6 +199,9 @@ function initializeForms() {
         document.getElementById('returnModal').style.display = 'none';
     });
     
+    // Add condition change handler
+    document.getElementById('conditionReturned').addEventListener('change', handleConditionChange);
+    
     document.getElementById('returnForm').addEventListener('submit', handleReturnTool);
     
     // Export buttons
@@ -482,6 +485,29 @@ function openReturnModal(issuanceId) {
     document.getElementById('returnModal').style.display = 'block';
 }
 
+function handleConditionChange() {
+    const condition = document.getElementById('conditionReturned').value;
+    const timeInField = document.getElementById('timeIn');
+    const submitBtn = document.getElementById('submitReturnText');
+    
+    if (condition === 'Lost/Missing') {
+        timeInField.required = false;
+        timeInField.value = '';
+        timeInField.disabled = true;
+        submitBtn.textContent = 'Mark as Lost';
+        submitBtn.parentElement.className = 'btn btn-warning';
+    } else {
+        timeInField.required = true;
+        timeInField.disabled = false;
+        if (!timeInField.value) {
+            const now = new Date();
+            timeInField.value = now.toTimeString().slice(0, 5);
+        }
+        submitBtn.textContent = 'Mark as Returned';
+        submitBtn.parentElement.className = 'btn btn-success';
+    }
+}
+
 async function handleReturnTool(e) {
     e.preventDefault();
     
@@ -490,8 +516,14 @@ async function handleReturnTool(e) {
     const conditionReturned = document.getElementById('conditionReturned').value;
     const comments = document.getElementById('returnComments').value;
     
-    if (!timeIn || !conditionReturned) {
-        showAlert('Please fill in all required fields', 'error');
+    if (!conditionReturned) {
+        showAlert('Please select a condition', 'error');
+        return;
+    }
+    
+    // For Lost/Missing, time_in is not required
+    if (conditionReturned !== 'Lost/Missing' && !timeIn) {
+        showAlert('Please enter the time in', 'error');
         return;
     }
     
@@ -502,15 +534,17 @@ async function handleReturnTool(e) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                time_in: timeIn,
+                time_in: timeIn || null,
                 condition_returned: conditionReturned,
+                status: conditionReturned === 'Lost/Missing' ? 'lost' : 'returned',
                 comments: comments
             })
         });
         
         if (response.ok) {
             document.getElementById('returnModal').style.display = 'none';
-            showAlert('Tool marked as returned!', 'success');
+            const statusText = conditionReturned === 'Lost/Missing' ? 'marked as lost' : 'marked as returned';
+            showAlert(`Tool ${statusText} successfully!`, 'success');
             loadDashboardData(); // Refresh all data
         } else {
             const error = await response.json();
