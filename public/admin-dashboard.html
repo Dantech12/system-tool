@@ -641,6 +641,39 @@
         </div>
     </div>
 
+    <!-- Custom Alert Modal -->
+    <div id="alertModal" class="alert-modal">
+        <div class="alert-modal-content">
+            <div id="alertModalHeader" class="alert-modal-header">
+                <i id="alertModalIcon" class="alert-modal-icon"></i>
+                <h3 id="alertModalTitle" class="alert-modal-title"></h3>
+            </div>
+            <div class="alert-modal-body">
+                <p id="alertModalMessage" class="alert-modal-message"></p>
+                <div id="alertModalButtons" class="alert-modal-buttons">
+                    <button id="alertModalOk" class="alert-modal-btn primary">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="alert-modal">
+        <div class="alert-modal-content">
+            <div class="alert-modal-header warning">
+                <i class="fas fa-question-circle alert-modal-icon"></i>
+                <h3 class="alert-modal-title">Confirm Action</h3>
+            </div>
+            <div class="alert-modal-body">
+                <p id="confirmModalMessage" class="alert-modal-message"></p>
+                <div class="alert-modal-buttons">
+                    <button id="confirmModalCancel" class="alert-modal-btn secondary">Cancel</button>
+                    <button id="confirmModalConfirm" class="alert-modal-btn primary">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="js/admin-dashboard.js"></script>
 </body>
 </html>

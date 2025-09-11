@@ -43,18 +43,55 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    function showAlert(message, type) {
-        alertContainer.innerHTML = `
-            <div class="alert alert-${type}">
-                ${message}
-            </div>
-        `;
+    function showAlert(message, type = 'info') {
+        const modal = document.getElementById('alertModal');
+        const header = document.getElementById('alertModalHeader');
+        const icon = document.getElementById('alertModalIcon');
+        const title = document.getElementById('alertModalTitle');
+        const messageEl = document.getElementById('alertModalMessage');
         
-        // Auto-hide success messages
+        // Set type-specific styling and content
+        header.className = `alert-modal-header ${type}`;
+        
+        switch(type) {
+            case 'success':
+                icon.className = 'fas fa-check-circle alert-modal-icon';
+                title.textContent = 'Success';
+                break;
+            case 'error':
+                icon.className = 'fas fa-exclamation-triangle alert-modal-icon';
+                title.textContent = 'Error';
+                break;
+            case 'warning':
+                icon.className = 'fas fa-exclamation-circle alert-modal-icon';
+                title.textContent = 'Warning';
+                break;
+            default:
+                icon.className = 'fas fa-info-circle alert-modal-icon';
+                title.textContent = 'Information';
+        }
+        
+        messageEl.textContent = message;
+        modal.style.display = 'block';
+        
+        // Auto-hide success messages after 3 seconds
         if (type === 'success') {
             setTimeout(() => {
-                alertContainer.innerHTML = '';
+                modal.style.display = 'none';
             }, 3000);
         }
     }
+    
+    // Initialize modal event listeners
+    document.getElementById('alertModalOk').addEventListener('click', () => {
+        document.getElementById('alertModal').style.display = 'none';
+    });
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', (event) => {
+        const alertModal = document.getElementById('alertModal');
+        if (event.target === alertModal) {
+            alertModal.style.display = 'none';
+        }
+    });
 });

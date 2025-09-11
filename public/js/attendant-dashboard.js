@@ -703,23 +703,91 @@ function formatDate(dateString) {
     return new Date(dateString).toLocaleDateString();
 }
 
-function showAlert(message, type) {
-    // Create alert element
-    const alert = document.createElement('div');
-    alert.className = `alert alert-${type}`;
-    alert.textContent = message;
-    alert.style.position = 'fixed';
-    alert.style.top = '20px';
-    alert.style.right = '20px';
-    alert.style.zIndex = '9999';
-    alert.style.minWidth = '300px';
+// Custom Alert Modal Functions
+function showAlert(message, type = 'info') {
+    const modal = document.getElementById('alertModal');
+    const header = document.getElementById('alertModalHeader');
+    const icon = document.getElementById('alertModalIcon');
+    const title = document.getElementById('alertModalTitle');
+    const messageEl = document.getElementById('alertModalMessage');
+    const okBtn = document.getElementById('alertModalOk');
     
-    document.body.appendChild(alert);
+    // Set type-specific styling and content
+    header.className = `alert-modal-header ${type}`;
     
-    // Auto-remove after 3 seconds
-    setTimeout(() => {
-        if (alert.parentNode) {
-            alert.parentNode.removeChild(alert);
-        }
-    }, 3000);
+    switch(type) {
+        case 'success':
+            icon.className = 'fas fa-check-circle alert-modal-icon';
+            title.textContent = 'Success';
+            break;
+        case 'error':
+            icon.className = 'fas fa-exclamation-triangle alert-modal-icon';
+            title.textContent = 'Error';
+            break;
+        case 'warning':
+            icon.className = 'fas fa-exclamation-circle alert-modal-icon';
+            title.textContent = 'Warning';
+            break;
+        default:
+            icon.className = 'fas fa-info-circle alert-modal-icon';
+            title.textContent = 'Information';
+    }
+    
+    messageEl.textContent = message;
+    modal.style.display = 'block';
+    
+    // Auto-hide success messages after 3 seconds
+    if (type === 'success') {
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 3000);
+    }
 }
+
+function showConfirm(message, onConfirm, onCancel = null) {
+    const modal = document.getElementById('confirmModal');
+    const messageEl = document.getElementById('confirmModalMessage');
+    const confirmBtn = document.getElementById('confirmModalConfirm');
+    const cancelBtn = document.getElementById('confirmModalCancel');
+    
+    messageEl.textContent = message;
+    modal.style.display = 'block';
+    
+    // Remove existing event listeners
+    const newConfirmBtn = confirmBtn.cloneNode(true);
+    const newCancelBtn = cancelBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+    
+    // Add new event listeners
+    newConfirmBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+        if (onConfirm) onConfirm();
+    });
+    
+    newCancelBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+        if (onCancel) onCancel();
+    });
+}
+
+// Initialize modal event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Alert modal OK button
+    document.getElementById('alertModalOk').addEventListener('click', () => {
+        document.getElementById('alertModal').style.display = 'none';
+    });
+    
+    // Close modals when clicking outside
+    window.addEventListener('click', (event) => {
+        const alertModal = document.getElementById('alertModal');
+        const confirmModal = document.getElementById('confirmModal');
+        
+        if (event.target === alertModal) {
+            alertModal.style.display = 'none';
+        }
+        if (event.target === confirmModal) {
+            confirmModal.style.display = 'none';
+        }
+    });
+});
