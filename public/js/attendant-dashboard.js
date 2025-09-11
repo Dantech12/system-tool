@@ -43,6 +43,11 @@ async function checkAuth() {
     }
 }
 
+function checkUserSession() {
+    // Alias for checkAuth to maintain compatibility
+    return checkAuth();
+}
+
 function updateAttendantInfo() {
     const shiftTime = currentUser.shift_time === 'morning' ? 
         'Morning (6:30am - 18:30pm)' : 'Evening (18:30pm - 6:30am)';
@@ -185,15 +190,16 @@ function initializeForms() {
     toolCodeSelect.addEventListener('change', handleToolSelection);
     clearFormBtn.addEventListener('click', clearIssuanceForm);
     
-    // Return modal
-    const returnModal = document.getElementById('returnModal');
-    const closeReturnModal = document.getElementById('closeReturnModal');
-    const cancelReturn = document.getElementById('cancelReturn');
-    const returnForm = document.getElementById('returnForm');
+    // Return modal handlers
+    document.getElementById('cancelReturn').addEventListener('click', () => {
+        document.getElementById('returnModal').style.display = 'none';
+    });
     
-    closeReturnModal.addEventListener('click', () => returnModal.style.display = 'none');
-    cancelReturn.addEventListener('click', () => returnModal.style.display = 'none');
-    returnForm.addEventListener('submit', handleReturnSubmit);
+    document.getElementById('closeReturnModal').addEventListener('click', () => {
+        document.getElementById('returnModal').style.display = 'none';
+    });
+    
+    document.getElementById('returnForm').addEventListener('submit', handleReturnTool);
     
     // Export buttons
     document.getElementById('exportRecordsBtn').addEventListener('click', exportAllRecords);
@@ -294,7 +300,7 @@ function displayMyRecords(records) {
                 </td>
                 <td>
                     ${issuance.status === 'issued' ? `
-                        <button class="btn btn-success btn-sm" onclick="showReturnModal(${issuance.id})">
+                        <button class="btn btn-success btn-sm" onclick="openReturnModal(${issuance.id})">
                             <i class="fas fa-undo"></i> Return
                         </button>
                     ` : '-'}
@@ -448,42 +454,58 @@ function clearIssuanceForm() {
     document.getElementById('availableQuantity').textContent = '0';
 }
 
-function showReturnModal(issuanceId) {
+function openReturnModal(issuanceId) {
     const issuance = myIssuances.find(i => i.id === issuanceId);
     if (!issuance) return;
     
     document.getElementById('returnIssuanceId').value = issuanceId;
     
-    // Set current time
-    const now = new Date();
-    document.getElementById('timeIn').value = now.toTimeString().slice(0, 5);
-    
-    // Display tool info
-    document.getElementById('returnToolInfo').innerHTML = `
+    // Populate tool info
+    const toolInfo = `
         <strong>Tool:</strong> ${issuance.tool_code} - ${issuance.tool_description}<br>
         <strong>Quantity:</strong> ${issuance.quantity}<br>
         <strong>Issued To:</strong> ${issuance.issued_to_name} (${issuance.issued_to_id})<br>
         <strong>Department:</strong> ${issuance.department}<br>
         <strong>Time Out:</strong> ${issuance.time_out}
     `;
+    document.getElementById('returnToolInfo').innerHTML = toolInfo;
+    
+    // Set current time as default
+    const now = new Date();
+    const timeString = now.toTimeString().slice(0, 5);
+    document.getElementById('timeIn').value = timeString;
+    
+    // Reset form fields
+    document.getElementById('conditionReturned').value = '';
+    document.getElementById('returnComments').value = '';
     
     document.getElementById('returnModal').style.display = 'block';
 }
 
-async function handleReturnSubmit(e) {
+async function handleReturnTool(e) {
     e.preventDefault();
     
-    const issuanceId = document.getElementById('returnIssuanceId').value;
-    const returnData = {
-        time_in: document.getElementById('timeIn').value,
-        condition_returned: document.getElementById('conditionReturned').value
-    };
+    const id = document.getElementById('returnIssuanceId').value;
+    const timeIn = document.getElementById('timeIn').value;
+    const conditionReturned = document.getElementById('conditionReturned').value;
+    const comments = document.getElementById('returnComments').value;
+    
+    if (!timeIn || !conditionReturned) {
+        showAlert('Please fill in all required fields', 'error');
+        return;
+    }
     
     try {
-        const response = await fetch(`/api/tool-issuances/${issuanceId}/return`, {
+        const response = await fetch(`/api/tool-issuances/${id}/return`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(returnData)
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                time_in: timeIn,
+                condition_returned: conditionReturned,
+                comments: comments
+            })
         });
         
         if (response.ok) {
@@ -495,6 +517,7 @@ async function handleReturnSubmit(e) {
             showAlert(error.error || 'Failed to return tool', 'error');
         }
     } catch (error) {
+        console.error('Error returning tool:', error);
         showAlert('Error returning tool', 'error');
     }
 }
