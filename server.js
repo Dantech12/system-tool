@@ -512,8 +512,10 @@ app.post('/api/tool-issuances', requireAuth, async (req, res) => {
     const userShift = user.shift || 'A';
     const userShiftTime = user.shift_time || 'morning';
     
-    // Calculate shift day and times
-    const shiftDay = Math.floor((Date.now() - new Date(user.created_at || Date.now()).getTime()) / (24 * 60 * 60 * 1000)) + 1;
+    // Calculate shift day and times - incremental day counter
+    // Get the number of days since the system started (using a fixed start date)
+    const systemStartDate = new Date('2025-01-01'); // System start reference
+    const shiftDay = Math.floor((Date.now() - systemStartDate.getTime()) / (24 * 60 * 60 * 1000)) + 1;
     const issueDate = new Date(date);
     const { startTime, endTime } = calculateShiftTimes(userShiftTime, issueDate);
     
@@ -940,7 +942,7 @@ function generatePDFReport(res, data, user, reportTitle = 'Tool Issuance Report'
     doc.text('Tools not returned at shift end', 120, yPosition);
     
     // Add footer
-    doc.fontSize(8).text('© 2024 Rabotec Ghana Limited. All rights reserved.', 50, doc.page.height - 50);
+    doc.fontSize(8).text('© 2025 Rabotec Ghana Limited. All rights reserved.', 50, doc.page.height - 50);
     
     console.log('Finalizing PDF document');
     doc.end();
