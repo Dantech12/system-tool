@@ -512,10 +512,10 @@ app.post('/api/tool-issuances', requireAuth, async (req, res) => {
     const userShift = user.shift || 'A';
     const userShiftTime = user.shift_time || 'morning';
     
-    // Calculate shift day and times - incremental day counter
-    // Get the number of days since the system started (using a fixed start date)
-    const systemStartDate = new Date('2025-01-01'); // System start reference
-    const shiftDay = Math.floor((Date.now() - systemStartDate.getTime()) / (24 * 60 * 60 * 1000)) + 1;
+    // Calculate shift day and times - incremental day counter from attendant creation
+    // Get the number of days since this attendant was created
+    const attendantCreationDate = new Date(user.created_at || Date.now());
+    const shiftDay = Math.floor((Date.now() - attendantCreationDate.getTime()) / (24 * 60 * 60 * 1000)) + 1;
     const issueDate = new Date(date);
     const { startTime, endTime } = calculateShiftTimes(userShiftTime, issueDate);
     
