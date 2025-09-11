@@ -496,6 +496,15 @@ function handleConditionChange() {
         timeInField.disabled = true;
         submitBtn.textContent = 'Mark as Lost';
         submitBtn.parentElement.className = 'btn btn-warning';
+    } else if (condition === 'Damaged') {
+        timeInField.required = true;
+        timeInField.disabled = false;
+        if (!timeInField.value) {
+            const now = new Date();
+            timeInField.value = now.toTimeString().slice(0, 5);
+        }
+        submitBtn.textContent = 'Mark as Damaged';
+        submitBtn.parentElement.className = 'btn btn-danger';
     } else {
         timeInField.required = true;
         timeInField.disabled = false;
@@ -536,14 +545,16 @@ async function handleReturnTool(e) {
             body: JSON.stringify({
                 time_in: timeIn || null,
                 condition_returned: conditionReturned,
-                status: conditionReturned === 'Lost/Missing' ? 'lost' : 'returned',
+                status: conditionReturned === 'Lost/Missing' ? 'lost' : 
+                       conditionReturned === 'Damaged' ? 'damaged' : 'returned',
                 comments: comments
             })
         });
         
         if (response.ok) {
             document.getElementById('returnModal').style.display = 'none';
-            const statusText = conditionReturned === 'Lost/Missing' ? 'marked as lost' : 'marked as returned';
+            const statusText = conditionReturned === 'Lost/Missing' ? 'marked as lost' : 
+                              conditionReturned === 'Damaged' ? 'marked as damaged' : 'marked as returned';
             showAlert(`Tool ${statusText} successfully!`, 'success');
             loadDashboardData(); // Refresh all data
         } else {
@@ -673,6 +684,7 @@ function getStatusBadgeClass(status, isOverdue) {
         case 'issued': return 'badge-warning';
         case 'returned': return 'badge-success';
         case 'lost': return 'badge-danger';
+        case 'damaged': return 'badge-danger';
         default: return 'badge-info';
     }
 }
@@ -682,6 +694,7 @@ function getStatusDisplayText(status) {
         case 'issued': return 'Issued';
         case 'returned': return 'Returned';
         case 'lost': return 'Lost';
+        case 'damaged': return 'Damaged';
         default: return status;
     }
 }

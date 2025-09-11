@@ -564,7 +564,13 @@ app.put('/api/tool-issuances/:id/return', requireAuth, async (req, res) => {
     // Determine the correct status based on condition
     let finalStatus = status;
     if (!finalStatus) {
-        finalStatus = condition_returned === 'Lost/Missing' ? 'lost' : 'returned';
+        if (condition_returned === 'Lost/Missing') {
+            finalStatus = 'lost';
+        } else if (condition_returned === 'Damaged') {
+            finalStatus = 'damaged';
+        } else {
+            finalStatus = 'returned';
+        }
     }
     
     try {

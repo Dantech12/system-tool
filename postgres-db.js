@@ -271,11 +271,11 @@ class PostgresDB {
                 [time_in, condition_returned, status, comments, issuanceId]
             );
 
-            // Only return quantity to stock if tool is actually returned (not lost)
+            // Only return quantity to stock if tool is actually returned (not lost or damaged)
             if (status === 'returned') {
                 await this.updateToolQuantity(issuance.tool_code, issuance.quantity);
             }
-            // For lost tools, don't add back to available quantity
+            // For lost or damaged tools, don't add back to available quantity
 
             return true;
         } finally {

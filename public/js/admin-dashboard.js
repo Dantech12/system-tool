@@ -315,6 +315,7 @@ function getStatusBadgeClass(status, isOverdue) {
         case 'issued': return 'badge-warning';
         case 'returned': return 'badge-success';
         case 'lost': return 'badge-danger';
+        case 'damaged': return 'badge-danger';
         default: return 'badge-info';
     }
 }
@@ -324,6 +325,7 @@ function getStatusDisplayText(status) {
         case 'issued': return 'Issued';
         case 'returned': return 'Returned';
         case 'lost': return 'Lost';
+        case 'damaged': return 'Damaged';
         default: return status;
     }
 }
