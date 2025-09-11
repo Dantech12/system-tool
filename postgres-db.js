@@ -255,7 +255,7 @@ class PostgresDB {
     async returnTool(issuanceId, returnData) {
         const client = await this.pool.connect();
         try {
-            const { time_in, condition_returned } = returnData;
+            const { time_in, condition_returned, status, comments } = returnData;
             
             // Get the issuance to know the quantity to return
             const issuanceResult = await client.query('SELECT * FROM tool_issuances WHERE id = $1', [issuanceId]);
@@ -265,14 +265,17 @@ class PostgresDB {
                 throw new Error('Tool issuance not found');
             }
 
-            // Update the issuance
+            // Update the issuance with proper status
             await client.query(
-                'UPDATE tool_issuances SET time_in = $1, condition_returned = $2, status = $3 WHERE id = $4',
-                [time_in, condition_returned, 'returned', issuanceId]
+                'UPDATE tool_issuances SET time_in = $1, condition_returned = $2, status = $3, comments = $4 WHERE id = $5',
+                [time_in, condition_returned, status, comments, issuanceId]
             );
 
-            // Return quantity to available stock
-            await this.updateToolQuantity(issuance.tool_code, issuance.quantity);
+            // Only return quantity to stock if tool is actually returned (not lost)
+            if (status === 'returned') {
+                await this.updateToolQuantity(issuance.tool_code, issuance.quantity);
+            }
+            // For lost tools, don't add back to available quantity
 
             return true;
         } finally {

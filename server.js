@@ -559,13 +559,20 @@ app.get('/api/tool-issuances', requireAuth, async (req, res) => {
 
 app.put('/api/tool-issuances/:id/return', requireAuth, async (req, res) => {
     const { id } = req.params;
-    const { time_in, condition_returned } = req.body;
+    const { time_in, condition_returned, status, comments } = req.body;
+    
+    // Determine the correct status based on condition
+    let finalStatus = status;
+    if (!finalStatus) {
+        finalStatus = condition_returned === 'Lost/Missing' ? 'lost' : 'returned';
+    }
     
     try {
         await postgresDB.returnTool(parseInt(id), {
-            time_in,
+            time_in: time_in || null,
             condition_returned,
-            status: 'returned'
+            status: finalStatus,
+            comments: comments || null
         });
         
         res.json({ success: true });
