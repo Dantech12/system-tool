@@ -649,27 +649,30 @@ async function deleteUser(userId) {
 
 async function markReturned(issuanceId) {
     const timeIn = new Date().toTimeString().slice(0, 5);
-    const condition = prompt('Enter condition of returned tool:');
     
-    if (condition === null) return;
-    
-    try {
-        const response = await fetch(`/api/tool-issuances/${issuanceId}/return`, {
+    showInput('Enter condition of returned tool:', 'Tool Condition', 'Enter condition...', (condition) => {
+        if (!condition.trim()) {
+            showAlert('Please enter a valid condition', 'error');
+            return;
+        }
+        
+        fetch(`/api/tool-issuances/${issuanceId}/return`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ time_in: timeIn, condition_returned: condition })
+        })
+        .then(response => {
+            if (response.ok) {
+                loadIssuances();
+                showAlert('Tool marked as returned!', 'success');
+            } else {
+                showAlert('Failed to mark tool as returned', 'error');
+            }
+        })
+        .catch(error => {
+            showAlert('Error updating tool status', 'error');
         });
-        
-        if (response.ok) {
-            loadIssuances();
-            loadDashboardData();
-            showAlert('Tool marked as returned!', 'success');
-        } else {
-            showAlert('Failed to mark tool as returned', 'error');
-        }
-    } catch (error) {
-        showAlert('Error updating tool status', 'error');
-    }
+    });
 }
 
 async function clearOverdue(issuanceId) {
@@ -837,12 +840,16 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('click', (event) => {
         const alertModal = document.getElementById('alertModal');
         const confirmModal = document.getElementById('confirmModal');
+        const inputModal = document.getElementById('inputModal');
         
         if (event.target === alertModal) {
             alertModal.style.display = 'none';
         }
         if (event.target === confirmModal) {
             confirmModal.style.display = 'none';
+        }
+        if (event.target === inputModal) {
+            inputModal.style.display = 'none';
         }
     });
 });
@@ -915,5 +922,48 @@ function showConfirm(message, onConfirm, onCancel = null) {
     newCancelBtn.addEventListener('click', () => {
         modal.style.display = 'none';
         if (onCancel) onCancel();
+    });
+}
+
+function showInput(message, title, placeholder, onSubmit, onCancel = null) {
+    const modal = document.getElementById('inputModal');
+    const titleEl = document.getElementById('inputModalTitle');
+    const labelEl = document.getElementById('inputModalLabel');
+    const inputEl = document.getElementById('inputModalInput');
+    const submitBtn = document.getElementById('inputModalSubmit');
+    const cancelBtn = document.getElementById('inputModalCancel');
+    
+    titleEl.textContent = title;
+    labelEl.textContent = message;
+    inputEl.placeholder = placeholder;
+    inputEl.value = '';
+    modal.style.display = 'block';
+    inputEl.focus();
+    
+    // Remove existing event listeners
+    const newSubmitBtn = submitBtn.cloneNode(true);
+    const newCancelBtn = cancelBtn.cloneNode(true);
+    submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
+    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+    
+    // Add new event listeners
+    newSubmitBtn.addEventListener('click', () => {
+        const value = inputEl.value.trim();
+        modal.style.display = 'none';
+        if (onSubmit) onSubmit(value);
+    });
+    
+    newCancelBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+        if (onCancel) onCancel();
+    });
+    
+    // Handle Enter key
+    inputEl.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            const value = inputEl.value.trim();
+            modal.style.display = 'none';
+            if (onSubmit) onSubmit(value);
+        }
     });
 }
