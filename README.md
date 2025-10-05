@@ -1,6 +1,6 @@
-# Industrial Tool Management System
+# Rabotec Tool Management System
 
-A comprehensive tool management audit system designed to track tool inventory, manage issuances, and generate professional reports for industrial operations.
+A comprehensive tool management audit system designed to track tool inventory, manage issuances, and generate professional reports for industrial operations. Optimized for deployment on Railway with PostgreSQL database.
 
 ## Features
 
@@ -26,27 +26,40 @@ A comprehensive tool management audit system designed to track tool inventory, m
 - **Overdue Alerts**: Red highlighting for tools not returned after shift end
 - **Company Branding**: All exports include company logo and professional formatting
 
-## Installation
+## Quick Start
+
+### Local Development
 
 1. **Install Dependencies**
    ```bash
    npm install
    ```
 
-2. **Start the Server**
+2. **Set Up Environment Variables**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your database credentials
+   ```
+
+3. **Start the Server**
    ```bash
    npm start
    ```
-   or
-   ```bash
-   node server.js
-   ```
 
-3. **Access the System**
+4. **Access the System**
    - Open your browser and go to `http://localhost:3000`
    - Default admin credentials:
-     - Username: `admin`
-     - Password: `admin123`
+     - Username: `Kevin Owusu`
+     - Password: `12448`
+
+### Railway Deployment
+
+For production deployment on Railway, see the comprehensive [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) which includes:
+- Step-by-step Railway setup
+- PostgreSQL database configuration
+- Environment variables setup
+- Troubleshooting guide
+- Security best practices
 
 ## System Structure
 
@@ -90,11 +103,13 @@ For bulk tool import, use Excel files with these columns:
 ## Technical Details
 
 ### Built With
-- **Backend**: Node.js, Express.js, SQLite3
+- **Backend**: Node.js, Express.js, PostgreSQL
 - **Frontend**: HTML5, CSS3, JavaScript (ES6+)
 - **Authentication**: Express-session with bcrypt password hashing
 - **File Processing**: Multer for uploads, XLSX for Excel processing
 - **PDF Generation**: PDFKit for professional report generation
+- **Database**: PostgreSQL with pg driver
+- **Deployment**: Railway with Nixpacks
 - **Responsive Design**: Mobile-first CSS with modern styling
 
 ### Security Features
@@ -112,7 +127,7 @@ For bulk tool import, use Excel files with these columns:
 
 ## File Structure
 ```
-tool-management-system/
+rabotec-tool-system/
 ├── public/
 │   ├── css/styles.css
 │   ├── js/
@@ -125,7 +140,12 @@ tool-management-system/
 │   └── attendant-dashboard.html
 ├── uploads/ (for Excel imports)
 ├── server.js
+├── postgres-db.js
 ├── package.json
+├── railway.json
+├── nixpacks.toml
+├── .env.example
+├── DEPLOYMENT_GUIDE.md
 └── README.md
 ```
 
