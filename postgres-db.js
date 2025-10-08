@@ -211,6 +211,20 @@ class PostgresDB {
         }
     }
 
+    async updateTool(toolId, toolData) {
+        const client = await this.pool.connect();
+        try {
+            const { tool_code, description, quantity, available_quantity } = toolData;
+            const result = await client.query(
+                'UPDATE tools SET tool_code = $1, description = $2, quantity = $3, available_quantity = $4 WHERE id = $5 RETURNING *',
+                [tool_code, description, quantity, available_quantity, toolId]
+            );
+            return result.rows[0];
+        } finally {
+            client.release();
+        }
+    }
+
     // Tool issuance methods
     async getToolIssuances() {
         const client = await this.pool.connect();

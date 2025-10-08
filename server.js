@@ -413,38 +413,89 @@ app.put('/api/tool-issuances/:id/return', requireAuth, async (req, res) => {
 });
 
 // Excel import route
-app.post('/api/admin/import-tools', requireAdmin, upload.single('excel'), (req, res) => {
+app.post('/api/admin/import-tools', requireAdmin, upload.single('excel'), async (req, res) => {
     if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
     }
     
     try {
-        const workbook = xlsx.readFile(req.file.path);
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const data = xlsx.utils.sheet_to_json(worksheet);
+        let data;
+        const fileExtension = path.extname(req.file.originalname).toLowerCase();
+        
+        if (fileExtension === '.csv') {
+            // Handle CSV files
+            const csvContent = fs.readFileSync(req.file.path, 'utf8');
+            const lines = csvContent.split('\n');
+            const headers = lines[0].split(',').map(h => h.trim());
+            
+            data = [];
+            for (let i = 1; i < lines.length; i++) {
+                if (lines[i].trim()) {
+                    const values = lines[i].split(',').map(v => v.trim());
+                    const row = {};
+                    headers.forEach((header, index) => {
+                        row[header] = values[index];
+                    });
+                    data.push(row);
+                }
+            }
+        } else {
+            // Handle Excel files
+            const workbook = xlsx.readFile(req.file.path);
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            data = xlsx.utils.sheet_to_json(worksheet);
+        }
         
         let imported = 0;
         let errors = [];
         
-        data.forEach((row, index) => {
+        // Process each row sequentially to avoid database conflicts
+        for (let index = 0; index < data.length; index++) {
+            const row = data[index];
             const { tool_code, description, quantity } = row;
             
             if (tool_code && description && quantity) {
-                db.run('INSERT OR REPLACE INTO tools (tool_code, description, quantity, available_quantity) VALUES (?, ?, ?, ?)',
-                       [tool_code, description, quantity, quantity], function(err) {
-                    if (!err) imported++;
-                    else errors.push(`Row ${index + 1}: ${err.message}`);
-                });
+                try {
+                    // Check if tool already exists
+                    const existingTool = await postgresDB.getToolByCode(tool_code);
+                    
+                    if (existingTool) {
+                        // Update existing tool - set both quantity and available_quantity to the new quantity
+                        await postgresDB.updateTool(existingTool.id, {
+                            tool_code,
+                            description,
+                            quantity: parseInt(quantity),
+                            available_quantity: parseInt(quantity) // Reset available quantity to match total
+                        });
+                    } else {
+                        // Create new tool
+                        await postgresDB.createTool({
+                            tool_code,
+                            description,
+                            quantity: parseInt(quantity)
+                        });
+                    }
+                    imported++;
+                } catch (err) {
+                    errors.push(`Row ${index + 1}: ${err.message}`);
+                }
+            } else {
+                errors.push(`Row ${index + 1}: Missing required fields (tool_code, description, quantity)`);
             }
-        });
+        }
         
         // Clean up uploaded file
         fs.unlinkSync(req.file.path);
         
         res.json({ success: true, imported, errors });
     } catch (error) {
-        res.status(500).json({ error: 'Failed to process Excel file' });
+        console.error('Excel import error:', error);
+        // Clean up uploaded file on error
+        if (req.file && fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+        }
+        res.status(500).json({ error: 'Failed to process Excel file: ' + error.message });
     }
 });
 

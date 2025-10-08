@@ -415,8 +415,14 @@
                                             <i class="fas fa-file-excel"></i>
                                         </div>
                                         <div>
-                                            <strong>Import Tools</strong>
-                                            <p>Use "Import Excel" for bulk import. Format: tool_code, description, quantity columns.</p>
+                                            <strong>Import Tools from Excel</strong>
+                                            <p>Use "Import Excel" for bulk import. Excel file must contain columns: <strong>tool_code</strong>, <strong>description</strong>, and <strong>quantity</strong>. The quantity will automatically set both total and available quantities. Existing tools will be updated with new quantities.</p>
+                                            <div class="mt-1" style="font-size: 0.9em; color: var(--text-light);">
+                                                <strong>Example Excel format:</strong><br>
+                                                tool_code | description | quantity<br>
+                                                WR001 | Adjustable Wrench 10mm | 5<br>
+                                                DR002 | Electric Drill 18V | 3
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="help-item">
@@ -627,9 +633,17 @@
                 <form id="importForm" enctype="multipart/form-data">
                     <div class="form-group">
                         <label class="form-label">Excel File</label>
-                        <input type="file" id="excelFile" class="form-input" accept=".xlsx,.xls" required>
+                        <div class="mb-1">
+                            <a href="templates/tools_import_template.csv" download="tools_import_template.csv" class="btn btn-outline btn-sm">
+                                <i class="fas fa-download"></i> Download Template
+                            </a>
+                        </div>
+                        <input type="file" id="excelFile" class="form-input" accept=".xlsx,.xls,.csv" required>
                         <small class="text-sm" style="color: var(--text-light);">
-                            Excel file should have columns: tool_code, description, quantity
+                            <strong>Required columns:</strong> tool_code, description, quantity<br>
+                            • Existing tools will be updated with new quantities<br>
+                            • New tools will be added to the system<br>
+                            • Available quantity will mirror the total quantity
                         </small>
                     </div>
                     <div class="d-flex gap-1 justify-between">
