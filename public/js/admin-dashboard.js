@@ -1143,54 +1143,46 @@ async function loadAndFilterAdminRequests(status) {
 
 // Clear tool issuances functionality
 document.getElementById('clearIssuancesBtn')?.addEventListener('click', function() {
-    showConfirmDialog(
-        'Clear All Tool Issuances',
-        'Are you sure you want to delete all tool issuances? This action cannot be undone and will permanently remove all issuance records.',
-        async () => {
-            try {
-                const response = await fetch('/api/tool-issuances/clear', {
-                    method: 'DELETE'
-                });
-                
-                if (response.ok) {
-                    showAlert('All tool issuances cleared successfully!', 'success');
-                    loadIssuances(); // Refresh the issuances table
-                    loadDashboardData(); // Refresh dashboard stats
-                } else {
-                    const error = await response.json();
-                    showAlert('Failed to clear issuances: ' + error.error, 'error');
-                }
-            } catch (error) {
-                showAlert('Error clearing issuances: ' + error.message, 'error');
+    showConfirm('Are you sure you want to delete all tool issuances? This action cannot be undone and will permanently remove all issuance records.', async () => {
+        try {
+            const response = await fetch('/api/tool-issuances/clear', {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                showAlert('All tool issuances cleared successfully!', 'success');
+                loadIssuances(); // Refresh the issuances table
+                loadDashboardData(); // Refresh dashboard stats
+            } else {
+                const error = await response.json();
+                showAlert('Failed to clear issuances: ' + error.error, 'error');
             }
+        } catch (error) {
+            showAlert('Error clearing issuances: ' + error.message, 'error');
         }
-    );
+    });
 });
 
 // Clear tool requests functionality
 document.getElementById('clearRequestsBtn')?.addEventListener('click', function() {
-    showConfirmDialog(
-        'Clear All Tool Requests',
-        'Are you sure you want to delete all tool requests? This action cannot be undone and will permanently remove all request records.',
-        async () => {
-            try {
-                const response = await fetch('/api/tool-requests/clear', {
-                    method: 'DELETE'
-                });
-                
-                if (response.ok) {
-                    showAlert('All tool requests cleared successfully!', 'success');
-                    loadToolRequests(); // Refresh the requests table
-                    loadDashboardData(); // Refresh dashboard stats and notifications
-                } else {
-                    const error = await response.json();
-                    showAlert('Failed to clear requests: ' + error.error, 'error');
-                }
-            } catch (error) {
-                showAlert('Error clearing requests: ' + error.message, 'error');
+    showConfirm('Are you sure you want to delete all tool requests? This action cannot be undone and will permanently remove all request records.', async () => {
+        try {
+            const response = await fetch('/api/tool-requests/clear', {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                showAlert('All tool requests cleared successfully!', 'success');
+                loadToolRequests(); // Refresh the requests table
+                loadDashboardData(); // Refresh dashboard stats and notifications
+            } else {
+                const error = await response.json();
+                showAlert('Failed to clear requests: ' + error.error, 'error');
             }
+        } catch (error) {
+            showAlert('Error clearing requests: ' + error.message, 'error');
         }
-    );
+    });
 });
 
 // Initialize tool request modal when page loads
