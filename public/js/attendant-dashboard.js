@@ -19,6 +19,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Set current date and time
     setCurrentDateTime();
+    
+    // Set up periodic refresh for tool requests (every 30 seconds)
+    setInterval(() => {
+        if (document.getElementById('tool-requests-page').style.display !== 'none') {
+            loadToolRequests();
+        }
+    }, 30 * 1000);
 });
 
 async function checkAuth() {
@@ -801,7 +808,6 @@ function displayMyRequests(requests) {
     
     requests.forEach(request => {
         const row = document.createElement('tr');
-        const statusClass = getStatusClass(request.status);
         const statusBadge = `<span class="badge ${getStatusBadgeClass(request.status, false)}">${getStatusDisplayText(request.status)}</span>`;
         
         row.innerHTML = `
@@ -946,6 +952,19 @@ async function loadToolsForRequest() {
 document.getElementById('requestStatusFilter')?.addEventListener('change', function() {
     const status = this.value;
     loadAndFilterRequests(status);
+});
+
+// Refresh requests button
+document.getElementById('refreshRequestsBtn')?.addEventListener('click', function() {
+    loadToolRequests();
+    // Add visual feedback
+    this.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Refreshing...';
+    this.disabled = true;
+    
+    setTimeout(() => {
+        this.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh';
+        this.disabled = false;
+    }, 1000);
 });
 
 async function loadAndFilterRequests(status) {

@@ -381,13 +381,18 @@
                     <div class="card mt-3">
                         <div class="card-header">
                             <h3 class="card-title">My Tool Requests</h3>
-                            <div class="form-group" style="margin: 0; width: 200px;">
-                                <select id="requestStatusFilter" class="form-select">
-                                    <option value="">All Status</option>
-                                    <option value="pending">Pending</option>
-                                    <option value="approved">Approved</option>
-                                    <option value="rejected">Rejected</option>
-                                </select>
+                            <div class="d-flex gap-2 align-items-center">
+                                <div class="form-group" style="margin: 0; width: 200px;">
+                                    <select id="requestStatusFilter" class="form-select">
+                                        <option value="">All Status</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="approved">Approved</option>
+                                        <option value="rejected">Rejected</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-sm btn-outline" id="refreshRequestsBtn" title="Refresh requests">
+                                    <i class="fas fa-sync-alt"></i> Refresh
+                                </button>
                             </div>
                         </div>
                         <div class="card-body">
