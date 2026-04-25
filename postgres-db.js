@@ -91,8 +91,7 @@ class PostgresDB {
                     status VARCHAR(50) DEFAULT 'pending',
                     admin_response TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (tool_code) REFERENCES tools(tool_code)
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             `);
 
