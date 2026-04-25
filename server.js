@@ -596,18 +596,6 @@ app.put('/api/tool-requests/:id/status', requireAdmin, async (req, res) => {
     }
 });
 
-app.delete('/api/tool-requests/:id', requireAdmin, async (req, res) => {
-    const { id } = req.params;
-    
-    try {
-        await postgresDB.deleteToolRequest(parseInt(id));
-        res.json({ success: true });
-    } catch (error) {
-        console.error('Error deleting tool request:', error);
-        res.status(500).json({ error: 'Failed to delete tool request' });
-    }
-});
-
 // Clear all tool issuances (admin only)
 app.delete('/api/tool-issuances/clear', requireAdmin, async (req, res) => {
     try {
@@ -627,6 +615,18 @@ app.delete('/api/tool-requests/clear', requireAdmin, async (req, res) => {
     } catch (error) {
         console.error('Error clearing tool requests:', error);
         res.status(500).json({ error: 'Failed to clear tool requests' });
+    }
+});
+
+app.delete('/api/tool-requests/:id', requireAdmin, async (req, res) => {
+    const { id } = req.params;
+    
+    try {
+        await postgresDB.deleteToolRequest(parseInt(id));
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error deleting tool request:', error);
+        res.status(500).json({ error: 'Failed to delete tool request' });
     }
 });
 
