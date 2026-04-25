@@ -84,6 +84,25 @@ body {
     border-radius: 8px;
     font-size: 16px;
     transition: border-color 0.3s ease;
+    box-sizing: border-box;
+}
+
+/* Responsive form inputs */
+@media (max-width: 480px) {
+    .form-input {
+        font-size: 16px; /* Prevent zoom on iOS */
+        padding: 10px 14px;
+    }
+    
+    .form-textarea {
+        font-size: 16px; /* Prevent zoom on iOS */
+        padding: 10px 14px;
+    }
+    
+    .btn {
+        width: 100%;
+        margin-bottom: 10px;
+    }
 }
 
 .form-input:focus {
@@ -331,10 +350,24 @@ body {
     display: flex;
     gap: 20px;
     margin-bottom: 20px;
+    flex-wrap: wrap;
 }
 
 .form-col {
     flex: 1;
+    min-width: 250px;
+}
+
+/* Tablet responsiveness */
+@media (max-width: 768px) {
+    .form-row {
+        gap: 15px;
+        flex-direction: column;
+    }
+    
+    .form-col {
+        min-width: 100%;
+    }
 }
 
 .form-select {
@@ -866,6 +899,15 @@ body {
     .form-col {
         width: 100%;
         margin-bottom: 0;
+    }
+    
+    .d-flex {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .justify-end {
+        justify-content: flex-start;
     }
     
     .stats-grid {
