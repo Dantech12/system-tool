@@ -325,6 +325,9 @@ function getStatusBadgeClass(status, isOverdue) {
         case 'returned': return 'badge-success';
         case 'lost': return 'badge-danger';
         case 'damaged': return 'badge-danger';
+        case 'pending': return 'badge-warning';
+        case 'approved': return 'badge-success';
+        case 'rejected': return 'badge-danger';
         default: return 'badge-info';
     }
 }
@@ -335,6 +338,9 @@ function getStatusDisplayText(status) {
         case 'returned': return 'Returned';
         case 'lost': return 'Lost';
         case 'damaged': return 'Damaged';
+        case 'pending': return 'Pending';
+        case 'approved': return 'Approved';
+        case 'rejected': return 'Rejected';
         default: return status;
     }
 }
@@ -1012,7 +1018,7 @@ function displayToolRequests(requests) {
     
     requests.forEach(request => {
         const row = document.createElement('tr');
-        const statusBadge = getStatusBadge(request.status);
+        const statusBadge = `<span class="badge ${getStatusBadgeClass(request.status, false)}">${getStatusDisplayText(request.status)}</span>`;
         
         row.innerHTML = `
             <td>${new Date(request.created_at).toLocaleDateString()}</td>
