@@ -408,34 +408,14 @@ body {
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-    .form-row {
-        gap: 15px;
-    }
-    
-    .form-col {
-        max-width: 100%;
-    }
-    
     .card-body {
         padding: 20px;
-    }
-    
-    #add-tool-page .page-content {
-        padding: 0 15px;
     }
 }
 
 @media (max-width: 480px) {
-    .form-row {
-        gap: 12px;
-    }
-    
     .card-body {
         padding: 15px;
-    }
-    
-    #add-tool-page .page-content {
-        padding: 0 10px;
     }
 }
 
