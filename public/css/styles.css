@@ -419,6 +419,10 @@ body {
     .card-body {
         padding: 20px;
     }
+    
+    #add-tool-page .page-content {
+        padding: 0 15px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -428,6 +432,10 @@ body {
     
     .card-body {
         padding: 15px;
+    }
+    
+    #add-tool-page .page-content {
+        padding: 0 10px;
     }
 }
 
