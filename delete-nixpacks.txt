@@ -1,0 +1,7 @@
+Delete this file and nixpacks.toml to fix Railway build
+
+Manual steps:
+1. Delete nixpacks.toml file
+2. Keep Dockerfile (Railway will use this instead)
+3. Push changes to GitHub
+4. Railway should build successfully with Dockerfile
