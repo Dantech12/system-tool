@@ -407,16 +407,17 @@ body {
 
 /* Add Tool page specific styling for larger devices */
 #add-tool-page {
-    max-width: 500px;
+    max-width: 600px;
     margin: 0 auto;
 }
 
 #add-tool-page .card {
     margin: 0 auto 24px auto;
+    width: 95%;
 }
 
 #add-tool-page .form-input {
-    max-width: 400px;
+    max-width: 100%;
 }
 
 #add-tool-page .form-group {
