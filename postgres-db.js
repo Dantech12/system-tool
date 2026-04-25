@@ -511,6 +511,28 @@ class PostgresDB {
         }
     }
 
+    // Clear all tool issuances
+    async clearToolIssuances() {
+        const client = await this.pool.connect();
+        try {
+            await client.query('DELETE FROM tool_issuances');
+            return true;
+        } finally {
+            client.release();
+        }
+    }
+
+    // Clear all tool requests
+    async clearToolRequests() {
+        const client = await this.pool.connect();
+        try {
+            await client.query('DELETE FROM tool_requests');
+            return true;
+        } finally {
+            client.release();
+        }
+    }
+
     // Run database migrations
     async runMigrations(client) {
         try {

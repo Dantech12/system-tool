@@ -608,6 +608,28 @@ app.delete('/api/tool-requests/:id', requireAdmin, async (req, res) => {
     }
 });
 
+// Clear all tool issuances (admin only)
+app.delete('/api/tool-issuances/clear', requireAdmin, async (req, res) => {
+    try {
+        await postgresDB.clearToolIssuances();
+        res.json({ success: true, message: 'All tool issuances cleared successfully' });
+    } catch (error) {
+        console.error('Error clearing tool issuances:', error);
+        res.status(500).json({ error: 'Failed to clear tool issuances' });
+    }
+});
+
+// Clear all tool requests (admin only)
+app.delete('/api/tool-requests/clear', requireAdmin, async (req, res) => {
+    try {
+        await postgresDB.clearToolRequests();
+        res.json({ success: true, message: 'All tool requests cleared successfully' });
+    } catch (error) {
+        console.error('Error clearing tool requests:', error);
+        res.status(500).json({ error: 'Failed to clear tool requests' });
+    }
+});
+
 // Export routes
 app.get('/api/export/issuances', requireAuth, async (req, res) => {
     try {
