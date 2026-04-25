@@ -291,6 +291,23 @@ app.post('/api/admin/tools', requireAdmin, async (req, res) => {
     }
 });
 
+// Attendant tool addition endpoint
+app.post('/api/tools/add', requireAuth, async (req, res) => {
+    const { tool_code, description, quantity } = req.body;
+    
+    try {
+        const newTool = await postgresDB.createTool({
+            tool_code,
+            description,
+            quantity
+        });
+        res.json({ success: true, id: newTool.id, message: 'Tool added successfully!' });
+    } catch (error) {
+        console.error('Error adding tool by attendant:', error);
+        res.status(500).json({ error: 'Failed to add tool' });
+    }
+});
+
 app.put('/api/admin/tools/:id', requireAdmin, async (req, res) => {
     const { id } = req.params;
     const { tool_code, description, quantity } = req.body;

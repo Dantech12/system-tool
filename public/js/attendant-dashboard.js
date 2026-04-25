@@ -128,7 +128,8 @@ function initializeNavigation() {
                 issuance: 'Tool Issuance',
                 'my-records': 'My Records',
                 'tools-list': 'Available Tools',
-                'tool-requests': 'Tool Requests'
+                'tool-requests': 'Tool Requests',
+                'add-tool': 'Add Tool'
             };
             document.getElementById('pageTitle').textContent = titles[page] || 'Tool Issuance';
         });
@@ -188,6 +189,9 @@ function showPage(pageId) {
         case 'tool-requests':
             loadToolRequests();
             initializeToolRequestForm();
+            break;
+        case 'add-tool':
+            initializeAddToolForm();
             break;
     }
 }
@@ -978,6 +982,56 @@ async function loadAndFilterRequests(status) {
     } catch (error) {
         console.error('Error loading filtered requests:', error);
     }
+}
+
+// Add Tool Form Functions
+function initializeAddToolForm() {
+    const form = document.getElementById('addToolForm');
+    const clearBtn = document.getElementById('clearAddToolForm');
+    
+    // Set the "Added By" field with current user info
+    document.getElementById('addedBy').value = currentUser.username + ' (' + currentUser.shift + ')';
+    
+    // Form submission
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = {
+            tool_code: document.getElementById('newToolCode').value.trim(),
+            description: document.getElementById('newToolDescription').value.trim(),
+            quantity: parseInt(document.getElementById('newToolQuantity').value)
+        };
+        
+        try {
+            const response = await fetch('/api/tools/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            if (response.ok) {
+                showAlert('Tool added successfully!', 'success');
+                form.reset();
+                document.getElementById('addedBy').value = currentUser.username + ' (' + currentUser.shift + ')';
+                
+                // Refresh available tools list if user navigates there
+                loadAvailableTools();
+            } else {
+                const error = await response.json();
+                showAlert('Failed to add tool: ' + error.error, 'error');
+            }
+        } catch (error) {
+            showAlert('Error adding tool: ' + error.message, 'error');
+        }
+    });
+    
+    // Clear form
+    clearBtn.addEventListener('click', function() {
+        form.reset();
+        document.getElementById('addedBy').value = currentUser.username + ' (' + currentUser.shift + ')';
+    });
 }
 
 // Initialize modal event listeners
