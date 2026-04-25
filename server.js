@@ -525,6 +525,89 @@ app.delete('/api/admin/users/:id', requireAdmin, async (req, res) => {
     }
 });
 
+// Tool Request API endpoints
+app.post('/api/tool-requests', requireAuth, async (req, res) => {
+    const { tool_code, tool_description, quantity, reason } = req.body;
+    const user = req.session.user;
+    
+    // Validate required fields
+    if (!tool_code || !quantity || !reason) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    try {
+        const requestData = {
+            attendant_name: user.username,
+            attendant_shift: user.shift || 'A',
+            shift_time: user.shift_time || 'morning',
+            tool_code,
+            tool_description: tool_description || '',
+            quantity: parseInt(quantity),
+            reason
+        };
+        
+        const newRequest = await postgresDB.createToolRequest(requestData);
+        res.json({ success: true, id: newRequest.id });
+    } catch (error) {
+        console.error('Error creating tool request:', error);
+        res.status(500).json({ error: 'Failed to create tool request: ' + error.message });
+    }
+});
+
+app.get('/api/tool-requests', requireAuth, async (req, res) => {
+    try {
+        const { status } = req.query;
+        const requests = await postgresDB.getToolRequests(status);
+        res.json(requests);
+    } catch (error) {
+        console.error('Error fetching tool requests:', error);
+        res.status(500).json({ error: 'Failed to fetch tool requests' });
+    }
+});
+
+app.get('/api/tool-requests/pending', requireAdmin, async (req, res) => {
+    try {
+        const requests = await postgresDB.getPendingToolRequests();
+        res.json(requests);
+    } catch (error) {
+        console.error('Error fetching pending tool requests:', error);
+        res.status(500).json({ error: 'Failed to fetch pending tool requests' });
+    }
+});
+
+app.put('/api/tool-requests/:id/status', requireAdmin, async (req, res) => {
+    const { id } = req.params;
+    const { status, admin_response } = req.body;
+    
+    if (!status || !['approved', 'rejected', 'pending'].includes(status)) {
+        return res.status(400).json({ error: 'Invalid status' });
+    }
+    
+    try {
+        const updatedRequest = await postgresDB.updateToolRequestStatus(
+            parseInt(id), 
+            status, 
+            admin_response
+        );
+        res.json({ success: true, request: updatedRequest });
+    } catch (error) {
+        console.error('Error updating tool request status:', error);
+        res.status(500).json({ error: 'Failed to update tool request status' });
+    }
+});
+
+app.delete('/api/tool-requests/:id', requireAdmin, async (req, res) => {
+    const { id } = req.params;
+    
+    try {
+        await postgresDB.deleteToolRequest(parseInt(id));
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error deleting tool request:', error);
+        res.status(500).json({ error: 'Failed to delete tool request' });
+    }
+});
+
 // Export routes
 app.get('/api/export/issuances', requireAuth, async (req, res) => {
     try {

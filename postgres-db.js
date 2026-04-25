@@ -77,6 +77,25 @@ class PostgresDB {
                 )
             `);
 
+            // Tool requests table
+            await client.query(`
+                CREATE TABLE IF NOT EXISTS tool_requests (
+                    id SERIAL PRIMARY KEY,
+                    attendant_name VARCHAR(255) NOT NULL,
+                    attendant_shift VARCHAR(10),
+                    shift_time VARCHAR(20),
+                    tool_code VARCHAR(100) NOT NULL,
+                    tool_description TEXT,
+                    quantity INTEGER NOT NULL,
+                    reason TEXT,
+                    status VARCHAR(50) DEFAULT 'pending',
+                    admin_response TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (tool_code) REFERENCES tools(tool_code)
+                )
+            `);
+
             console.log('Database tables created successfully');
         } finally {
             client.release();
@@ -408,6 +427,82 @@ class PostgresDB {
             stats.overdueTools = parseInt(overdueResult.rows[0].count);
             
             return stats;
+        } finally {
+            client.release();
+        }
+    }
+
+    // Tool Request methods
+    async createToolRequest(requestData) {
+        const client = await this.pool.connect();
+        try {
+            const { attendant_name, attendant_shift, shift_time, tool_code, tool_description, quantity, reason } = requestData;
+            
+            const result = await client.query(`
+                INSERT INTO tool_requests (attendant_name, attendant_shift, shift_time, tool_code, tool_description, quantity, reason)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                RETURNING *
+            `, [attendant_name, attendant_shift, shift_time, tool_code, tool_description, quantity, reason]);
+            
+            return result.rows[0];
+        } finally {
+            client.release();
+        }
+    }
+
+    async getToolRequests(status = null) {
+        const client = await this.pool.connect();
+        try {
+            let query = 'SELECT * FROM tool_requests ORDER BY created_at DESC';
+            let params = [];
+            
+            if (status) {
+                query = 'SELECT * FROM tool_requests WHERE status = $1 ORDER BY created_at DESC';
+                params = [status];
+            }
+            
+            const result = await client.query(query, params);
+            return result.rows;
+        } finally {
+            client.release();
+        }
+    }
+
+    async getPendingToolRequests() {
+        const client = await this.pool.connect();
+        try {
+            const result = await client.query(`
+                SELECT * FROM tool_requests 
+                WHERE status = 'pending' 
+                ORDER BY created_at DESC
+            `);
+            return result.rows;
+        } finally {
+            client.release();
+        }
+    }
+
+    async updateToolRequestStatus(requestId, status, adminResponse = null) {
+        const client = await this.pool.connect();
+        try {
+            const result = await client.query(`
+                UPDATE tool_requests 
+                SET status = $1, admin_response = $2, updated_at = CURRENT_TIMESTAMP
+                WHERE id = $3
+                RETURNING *
+            `, [status, adminResponse, requestId]);
+            
+            return result.rows[0];
+        } finally {
+            client.release();
+        }
+    }
+
+    async deleteToolRequest(requestId) {
+        const client = await this.pool.connect();
+        try {
+            await client.query('DELETE FROM tool_requests WHERE id = $1', [requestId]);
+            return true;
         } finally {
             client.release();
         }

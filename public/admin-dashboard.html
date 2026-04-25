@@ -54,6 +54,13 @@
                     </a>
                 </div>
                 <div class="nav-item">
+                    <a href="#tool-requests" class="nav-link" data-page="tool-requests">
+                        <i class="fas fa-hand-paper nav-icon"></i>
+                        Tool Requests
+                        <span id="requestBadge" class="badge" style="display: none; background: #e74c3c; color: white; padding: 2px 6px; border-radius: 10px; font-size: 10px; margin-left: 8px;">0</span>
+                    </a>
+                </div>
+                <div class="nav-item">
                     <a href="#reports" class="nav-link" data-page="reports">
                         <i class="fas fa-chart-bar nav-icon"></i>
                         Reports
@@ -89,6 +96,12 @@
             <div class="header">
                 <h1 class="header-title" id="pageTitle">Dashboard</h1>
                 <div class="header-actions">
+                    <div class="notifications-wrapper">
+                        <button class="btn btn-icon" id="notificationsBtn">
+                            <i class="fas fa-bell"></i>
+                            <span id="notificationBadge" class="badge" style="display: none; background: #e74c3c; color: white; padding: 2px 6px; border-radius: 10px; font-size: 10px; position: absolute; top: -5px; right: -5px;">0</span>
+                        </button>
+                    </div>
                     <div class="user-info">
                         <i class="fas fa-user-shield"></i>
                         <span id="currentUser">Kevin Owusu (Admin)</span>
@@ -255,6 +268,46 @@
                                             <th>Time In</th>
                                             <th>Condition</th>
                                             <th>Attendant</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tool Requests Page -->
+                <div id="tool-requests-page" class="page-content d-none">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-hand-paper"></i>
+                                Tool Requests Management
+                            </h3>
+                            <div class="form-group" style="margin: 0; width: 200px;">
+                                <select id="adminRequestStatusFilter" class="form-select">
+                                    <option value="">All Status</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="approved">Approved</option>
+                                    <option value="rejected">Rejected</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-container">
+                                <table class="table" id="adminRequestsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Attendant</th>
+                                            <th>Shift</th>
+                                            <th>Tool Code</th>
+                                            <th>Description</th>
+                                            <th>Quantity</th>
+                                            <th>Reason</th>
                                             <th>Status</th>
                                             <th>Actions</th>
                                         </tr>
@@ -574,6 +627,47 @@
                     <div class="d-flex gap-1 justify-between">
                         <button type="button" class="btn btn-secondary" id="cancelTool">Cancel</button>
                         <button type="submit" class="btn btn-primary">Save Tool</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tool Request Response Modal -->
+    <div id="toolRequestModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Respond to Tool Request</h3>
+                <span class="close" id="closeToolRequestModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="toolRequestResponseForm">
+                    <input type="hidden" id="requestId">
+                    
+                    <div class="form-group">
+                        <label class="form-label">Request Details</label>
+                        <div id="requestDetails" class="p-3" style="background-color: #f8fafc; border-radius: 8px; margin-bottom: 15px;">
+                            <!-- Request details will be populated here -->
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Action</label>
+                        <select id="requestStatus" class="form-select" required>
+                            <option value="">Select Action</option>
+                            <option value="approved">Approve Request</option>
+                            <option value="rejected">Reject Request</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Response Message</label>
+                        <textarea id="adminResponse" class="form-textarea" placeholder="Enter your response to the attendant..."></textarea>
+                    </div>
+
+                    <div class="d-flex gap-1 justify-between">
+                        <button type="button" class="btn btn-secondary" id="cancelRequestResponse">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Submit Response</button>
                     </div>
                 </form>
             </div>

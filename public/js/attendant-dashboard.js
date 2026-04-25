@@ -120,7 +120,8 @@ function initializeNavigation() {
             const titles = {
                 issuance: 'Tool Issuance',
                 'my-records': 'My Records',
-                'tools-list': 'Available Tools'
+                'tools-list': 'Available Tools',
+                'tool-requests': 'Tool Requests'
             };
             document.getElementById('pageTitle').textContent = titles[page] || 'Tool Issuance';
         });
@@ -176,6 +177,10 @@ function showPage(pageId) {
             break;
         case 'tools-list':
             loadAvailableTools();
+            break;
+        case 'tool-requests':
+            loadToolRequests();
+            initializeToolRequestForm();
             break;
     }
 }
@@ -769,6 +774,140 @@ function showConfirm(message, onConfirm, onCancel = null) {
         modal.style.display = 'none';
         if (onCancel) onCancel();
     });
+}
+
+// Tool Request Functions
+async function loadToolRequests() {
+    try {
+        const response = await fetch('/api/tool-requests');
+        if (response.ok) {
+            const requests = await response.json();
+            displayMyRequests(requests.filter(req => req.attendant_name === currentUser.username));
+        }
+    } catch (error) {
+        console.error('Error loading tool requests:', error);
+    }
+}
+
+function displayMyRequests(requests) {
+    const tbody = document.querySelector('#myRequestsTable tbody');
+    tbody.innerHTML = '';
+    
+    requests.forEach(request => {
+        const row = document.createElement('tr');
+        const statusClass = getStatusClass(request.status);
+        const statusBadge = getStatusBadge(request.status);
+        
+        row.innerHTML = `
+            <td>${new Date(request.created_at).toLocaleDateString()}</td>
+            <td>${request.tool_code}</td>
+            <td>${request.tool_description || '-'}</td>
+            <td>${request.quantity}</td>
+            <td>${request.reason}</td>
+            <td>${statusBadge}</td>
+            <td>${request.admin_response || '-'}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function initializeToolRequestForm() {
+    const form = document.getElementById('toolRequestForm');
+    const toolCodeSelect = document.getElementById('requestToolCode');
+    const clearBtn = document.getElementById('clearRequestForm');
+    
+    // Load tools for selection
+    loadToolsForRequest();
+    
+    // Tool code change event
+    toolCodeSelect.addEventListener('change', function() {
+        const selectedTool = tools.find(tool => tool.tool_code === this.value);
+        if (selectedTool) {
+            document.getElementById('requestToolDescription').value = selectedTool.description;
+            document.getElementById('requestAvailableQuantity').textContent = selectedTool.available_quantity;
+        }
+    });
+    
+    // Form submission
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = {
+            tool_code: document.getElementById('requestToolCode').value,
+            tool_description: document.getElementById('requestToolDescription').value,
+            quantity: parseInt(document.getElementById('requestQuantity').value),
+            reason: document.getElementById('requestReason').value
+        };
+        
+        try {
+            const response = await fetch('/api/tool-requests', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            if (response.ok) {
+                showAlert('Tool request submitted successfully!', 'success');
+                form.reset();
+                document.getElementById('requestToolDescription').value = '';
+                document.getElementById('requestAvailableQuantity').textContent = '0';
+                loadToolRequests();
+            } else {
+                const error = await response.json();
+                showAlert('Failed to submit request: ' + error.error, 'error');
+            }
+        } catch (error) {
+            showAlert('Error submitting request: ' + error.message, 'error');
+        }
+    });
+    
+    // Clear form
+    clearBtn.addEventListener('click', function() {
+        form.reset();
+        document.getElementById('requestToolDescription').value = '';
+        document.getElementById('requestAvailableQuantity').textContent = '0';
+    });
+}
+
+async function loadToolsForRequest() {
+    try {
+        const response = await fetch('/api/tools');
+        if (response.ok) {
+            tools = await response.json();
+            const select = document.getElementById('requestToolCode');
+            select.innerHTML = '<option value="">Select Tool</option>';
+            
+            tools.forEach(tool => {
+                const option = document.createElement('option');
+                option.value = tool.tool_code;
+                option.textContent = `${tool.tool_code} - ${tool.description}`;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading tools:', error);
+    }
+}
+
+// Filter requests
+document.getElementById('requestStatusFilter')?.addEventListener('change', function() {
+    const status = this.value;
+    loadAndFilterRequests(status);
+});
+
+async function loadAndFilterRequests(status) {
+    try {
+        const url = status ? `/api/tool-requests?status=${status}` : '/api/tool-requests';
+        const response = await fetch(url);
+        if (response.ok) {
+            const requests = await response.json();
+            displayMyRequests(requests.filter(req => req.attendant_name === currentUser.username));
+        }
+    } catch (error) {
+        console.error('Error loading filtered requests:', error);
+    }
 }
 
 // Initialize modal event listeners

@@ -96,6 +96,7 @@ function initializeNavigation() {
                 tools: 'Manage Tools',
                 users: 'Manage Attendants',
                 issuances: 'Tool Issuances',
+                'tool-requests': 'Tool Requests',
                 reports: 'Reports',
                 help: 'Help & Instructions'
             };
@@ -148,6 +149,9 @@ function showPage(pageId) {
         case 'issuances':
             loadIssuances();
             break;
+        case 'tool-requests':
+            loadToolRequests();
+            break;
         case 'reports':
             loadReportFilters();
             break;
@@ -157,23 +161,28 @@ function showPage(pageId) {
 async function loadDashboardData() {
     try {
         // Load stats
-        const [toolsRes, issuancesRes, usersRes, overdueRes] = await Promise.all([
+        const [toolsRes, issuancesRes, usersRes, overdueRes, requestsRes] = await Promise.all([
             fetch('/api/admin/tools'),
             fetch('/api/tool-issuances'),
             fetch('/api/admin/users'),
-            fetch('/api/overdue-tools')
+            fetch('/api/overdue-tools'),
+            fetch('/api/tool-requests/pending')
         ]);
         
         tools = await toolsRes.json();
         issuances = await issuancesRes.json();
         users = await usersRes.json();
         const overdueTools = await overdueRes.json();
+        const pendingRequests = await requestsRes.json();
         
         // Update stats
         document.getElementById('totalTools').textContent = tools.length;
         document.getElementById('issuedTools').textContent = issuances.filter(i => i.status === 'issued').length;
         document.getElementById('overdueTools').textContent = overdueTools.length;
         document.getElementById('totalAttendants').textContent = users.length;
+        
+        // Update notification badges
+        updateNotificationBadges(pendingRequests.length);
         
         // Load overdue tools alert
         loadOverdueToolsAlert(overdueTools);
@@ -967,3 +976,166 @@ function showInput(message, title, placeholder, onSubmit, onCancel = null) {
         }
     });
 }
+
+// Tool Request Functions
+function updateNotificationBadges(pendingCount) {
+    const notificationBadge = document.getElementById('notificationBadge');
+    const requestBadge = document.getElementById('requestBadge');
+    
+    if (pendingCount > 0) {
+        notificationBadge.textContent = pendingCount;
+        notificationBadge.style.display = 'inline';
+        requestBadge.textContent = pendingCount;
+        requestBadge.style.display = 'inline';
+    } else {
+        notificationBadge.style.display = 'none';
+        requestBadge.style.display = 'none';
+    }
+}
+
+async function loadToolRequests() {
+    try {
+        const response = await fetch('/api/tool-requests');
+        if (response.ok) {
+            const requests = await response.json();
+            displayToolRequests(requests);
+            updateNotificationBadges(requests.filter(req => req.status === 'pending').length);
+        }
+    } catch (error) {
+        console.error('Error loading tool requests:', error);
+    }
+}
+
+function displayToolRequests(requests) {
+    const tbody = document.querySelector('#adminRequestsTable tbody');
+    tbody.innerHTML = '';
+    
+    requests.forEach(request => {
+        const row = document.createElement('tr');
+        const statusBadge = getStatusBadge(request.status);
+        
+        row.innerHTML = `
+            <td>${new Date(request.created_at).toLocaleDateString()}</td>
+            <td>${request.attendant_name}</td>
+            <td>${request.attendant_shift || 'N/A'} (${request.shift_time || 'N/A'})</td>
+            <td>${request.tool_code}</td>
+            <td>${request.tool_description || '-'}</td>
+            <td>${request.quantity}</td>
+            <td>${request.reason}</td>
+            <td>${statusBadge}</td>
+            <td>
+                <button class="btn btn-sm btn-primary" onclick="openRequestResponse(${request.id})">
+                    <i class="fas fa-reply"></i> Respond
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function openRequestResponse(requestId) {
+    const modal = document.getElementById('toolRequestModal');
+    const form = document.getElementById('toolRequestResponseForm');
+    
+    // Find the request details
+    fetch('/api/tool-requests')
+        .then(response => response.json())
+        .then(requests => {
+            const request = requests.find(req => req.id === requestId);
+            if (request) {
+                // Populate request details
+                document.getElementById('requestId').value = request.id;
+                document.getElementById('requestDetails').innerHTML = `
+                    <strong>Attendant:</strong> ${request.attendant_name}<br>
+                    <strong>Shift:</strong> ${request.attendant_shift || 'N/A'} (${request.shift_time || 'N/A'})<br>
+                    <strong>Tool:</strong> ${request.tool_code} - ${request.tool_description || 'N/A'}<br>
+                    <strong>Quantity:</strong> ${request.quantity}<br>
+                    <strong>Reason:</strong> ${request.reason}<br>
+                    <strong>Date:</strong> ${new Date(request.created_at).toLocaleDateString()}
+                `;
+                
+                // Reset form
+                form.reset();
+                
+                // Show modal
+                modal.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading request details:', error);
+            showAlert('Error loading request details', 'error');
+        });
+}
+
+function initializeToolRequestModal() {
+    const modal = document.getElementById('toolRequestModal');
+    const form = document.getElementById('toolRequestResponseForm');
+    const closeBtn = document.getElementById('closeToolRequestModal');
+    const cancelBtn = document.getElementById('cancelRequestResponse');
+    
+    // Close modal events
+    closeBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+    
+    cancelBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+    
+    // Form submission
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const requestId = document.getElementById('requestId').value;
+        const status = document.getElementById('requestStatus').value;
+        const adminResponse = document.getElementById('adminResponse').value;
+        
+        try {
+            const response = await fetch(`/api/tool-requests/${requestId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    status: status,
+                    admin_response: adminResponse
+                })
+            });
+            
+            if (response.ok) {
+                showAlert('Tool request response submitted successfully!', 'success');
+                modal.style.display = 'none';
+                loadToolRequests(); // Refresh the requests list
+            } else {
+                const error = await response.json();
+                showAlert('Failed to submit response: ' + error.error, 'error');
+            }
+        } catch (error) {
+            showAlert('Error submitting response: ' + error.message, 'error');
+        }
+    });
+}
+
+// Filter requests
+document.getElementById('adminRequestStatusFilter')?.addEventListener('change', function() {
+    const status = this.value;
+    loadAndFilterAdminRequests(status);
+});
+
+async function loadAndFilterAdminRequests(status) {
+    try {
+        const url = status ? `/api/tool-requests?status=${status}` : '/api/tool-requests';
+        const response = await fetch(url);
+        if (response.ok) {
+            const requests = await response.json();
+            displayToolRequests(requests);
+        }
+    } catch (error) {
+        console.error('Error loading filtered requests:', error);
+    }
+}
+
+// Initialize tool request modal when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeToolRequestModal();
+});
