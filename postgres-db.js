@@ -96,6 +96,10 @@ class PostgresDB {
             `);
 
             console.log('Database tables created successfully');
+            
+            // Run migrations to update existing database
+            await this.runMigrations(client);
+            
         } finally {
             client.release();
         }
@@ -504,6 +508,21 @@ class PostgresDB {
             return true;
         } finally {
             client.release();
+        }
+    }
+
+    // Run database migrations
+    async runMigrations(client) {
+        try {
+            // Check if foreign key constraint exists and drop it
+            await client.query(`
+                ALTER TABLE tool_requests 
+                DROP CONSTRAINT IF EXISTS tool_requests_tool_code_fkey
+            `);
+            
+            console.log('Database migration completed successfully');
+        } catch (error) {
+            console.log('Migration error (this is normal if constraint doesn\'t exist):', error.message);
         }
     }
 
