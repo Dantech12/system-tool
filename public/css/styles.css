@@ -396,7 +396,6 @@ body {
     margin-bottom: 8px;
     font-weight: 600;
     color: var(--text-dark);
-    font-size: 14px;
 }
 
 .text-sm {
@@ -406,10 +405,33 @@ body {
     line-height: 1.4;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .card-body {
-        padding: 20px;
+/* Add Tool page specific styling for larger devices */
+#add-tool-page {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+#add-tool-page .card {
+    margin: 0 auto 24px auto;
+}
+
+#add-tool-page .form-input {
+    max-width: 400px;
+}
+
+#add-tool-page .form-group {
+    margin-bottom: 15px;
+}
+
+/* Ensure content is visible on larger screens */
+@media (min-width: 769px) {
+    #add-tool-page {
+        padding: 0 20px;
+    }
+    
+    #add-tool-page .form-input {
+        width: 100%;
+        max-width: 400px;
     }
 }
 
