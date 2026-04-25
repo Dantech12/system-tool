@@ -819,13 +819,33 @@ function displayMyRequests(requests) {
 
 function initializeToolRequestForm() {
     const form = document.getElementById('toolRequestForm');
+    const toolSelectionType = document.getElementById('toolSelectionType');
     const toolCodeSelect = document.getElementById('requestToolCode');
     const clearBtn = document.getElementById('clearRequestForm');
+    const existingToolSection = document.getElementById('existingToolSection');
+    const customToolSection = document.getElementById('customToolSection');
     
     // Load tools for selection
     loadToolsForRequest();
     
-    // Tool code change event
+    // Tool selection type change event
+    toolSelectionType.addEventListener('change', function() {
+        if (this.value === 'existing') {
+            existingToolSection.style.display = 'block';
+            customToolSection.style.display = 'none';
+            document.getElementById('requestToolCode').setAttribute('required', 'required');
+            document.getElementById('customToolCode').removeAttribute('required');
+            document.getElementById('customToolDescription').removeAttribute('required');
+        } else {
+            existingToolSection.style.display = 'none';
+            customToolSection.style.display = 'block';
+            document.getElementById('requestToolCode').removeAttribute('required');
+            document.getElementById('customToolCode').setAttribute('required', 'required');
+            document.getElementById('customToolDescription').setAttribute('required', 'required');
+        }
+    });
+    
+    // Tool code change event (for existing tools)
     toolCodeSelect.addEventListener('change', function() {
         const selectedTool = tools.find(tool => tool.tool_code === this.value);
         if (selectedTool) {
@@ -838,12 +858,24 @@ function initializeToolRequestForm() {
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        const formData = {
-            tool_code: document.getElementById('requestToolCode').value,
-            tool_description: document.getElementById('requestToolDescription').value,
-            quantity: parseInt(document.getElementById('requestQuantity').value),
-            reason: document.getElementById('requestReason').value
-        };
+        const toolSelectionType = document.getElementById('toolSelectionType').value;
+        let formData;
+        
+        if (toolSelectionType === 'existing') {
+            formData = {
+                tool_code: document.getElementById('requestToolCode').value,
+                tool_description: document.getElementById('requestToolDescription').value,
+                quantity: parseInt(document.getElementById('requestQuantity').value),
+                reason: document.getElementById('requestReason').value
+            };
+        } else {
+            formData = {
+                tool_code: document.getElementById('customToolCode').value,
+                tool_description: document.getElementById('customToolDescription').value,
+                quantity: parseInt(document.getElementById('requestQuantity').value),
+                reason: document.getElementById('requestReason').value
+            };
+        }
         
         try {
             const response = await fetch('/api/tool-requests', {
@@ -856,9 +888,7 @@ function initializeToolRequestForm() {
             
             if (response.ok) {
                 showAlert('Tool request submitted successfully!', 'success');
-                form.reset();
-                document.getElementById('requestToolDescription').value = '';
-                document.getElementById('requestAvailableQuantity').textContent = '0';
+                resetToolRequestForm();
                 loadToolRequests();
             } else {
                 const error = await response.json();
@@ -871,12 +901,27 @@ function initializeToolRequestForm() {
     
     // Clear form
     clearBtn.addEventListener('click', function() {
-        form.reset();
-        document.getElementById('requestToolDescription').value = '';
-        document.getElementById('requestAvailableQuantity').textContent = '0';
+        resetToolRequestForm();
     });
 }
 
+function resetToolRequestForm() {
+    const form = document.getElementById('toolRequestForm');
+    form.reset();
+    
+    // Reset both sections
+    document.getElementById('requestToolDescription').value = '';
+    document.getElementById('requestAvailableQuantity').textContent = '0';
+    
+    // Show existing tool section by default
+    document.getElementById('existingToolSection').style.display = 'block';
+    document.getElementById('customToolSection').style.display = 'none';
+    
+    // Reset required attributes
+    document.getElementById('requestToolCode').setAttribute('required', 'required');
+    document.getElementById('customToolCode').removeAttribute('required');
+    document.getElementById('customToolDescription').removeAttribute('required');
+}
 async function loadToolsForRequest() {
     try {
         const response = await fetch('/api/tools');

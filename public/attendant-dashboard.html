@@ -306,16 +306,43 @@
                         </div>
                         <div class="card-body">
                             <form id="toolRequestForm">
-                                <div class="form-row">
-                                    <div class="form-col">
-                                        <label class="form-label">Tool Code/ID</label>
-                                        <select id="requestToolCode" class="form-select" required>
-                                            <option value="">Select Tool</option>
-                                        </select>
+                                <div class="form-group">
+                                    <label class="form-label">Tool Selection</label>
+                                    <div class="form-row">
+                                        <div class="form-col">
+                                            <select id="toolSelectionType" class="form-select" required>
+                                                <option value="existing">Select from Existing Tools</option>
+                                                <option value="custom">Enter Custom Tool</option>
+                                            </select>
+                                        </div>
                                     </div>
-                                    <div class="form-col">
-                                        <label class="form-label">Tool Description</label>
-                                        <input type="text" id="requestToolDescription" class="form-input" readonly>
+                                </div>
+
+                                <div id="existingToolSection">
+                                    <div class="form-row">
+                                        <div class="form-col">
+                                            <label class="form-label">Tool Code/ID</label>
+                                            <select id="requestToolCode" class="form-select">
+                                                <option value="">Select Tool</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-col">
+                                            <label class="form-label">Tool Description</label>
+                                            <input type="text" id="requestToolDescription" class="form-input" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="customToolSection" style="display: none;">
+                                    <div class="form-row">
+                                        <div class="form-col">
+                                            <label class="form-label">Tool Code/ID</label>
+                                            <input type="text" id="customToolCode" class="form-input" placeholder="Enter tool code or identifier">
+                                        </div>
+                                        <div class="form-col">
+                                            <label class="form-label">Tool Description</label>
+                                            <input type="text" id="customToolDescription" class="form-input" placeholder="Describe the tool you need">
+                                        </div>
                                     </div>
                                 </div>
 
